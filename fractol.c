@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/28 14:17:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/09/29 06:37:44 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/09/29 09:59:28 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,13 +20,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define IMG_WIDTH 1920
-#define IMG_HEIGHT 1080
+#define IMG_WIDTH 1920 / 5
+#define IMG_HEIGHT 1080 / 5
 #define MIN_RE -3
 #define MAX_RE 2
 #define WIN_TITLE "fractol"
+#define SPEED 0.1
 
-#define MAX_ITER 300
+#define MAX_ITER 10
 #define MAX_MODULUS 4
 
 /* Same colorscheme that wikipedia uses */
@@ -37,7 +38,7 @@
 #define COLOR_5 0x00000200
 #define CRES 2048
 /* -950 + 2048 */
-#define CLRMAP_OFFSET 1098
+#define CLRMAP_OFFSET 1098 + 200
 
 #define MANDELBROT 0
 #define JULIA 1
@@ -333,26 +334,55 @@ void	render(void *mlx, void *mlx_win, t_img *img, t_fractal fractal)
 	mlx_put_image_to_window(mlx, mlx_win, img->img, 0, 0);
 }
 
+void	print_option(const char *option, const char *args, const char *desc)
+{
+	int	w;
+
+	printf("\t\033[34m%s\033[m", option);
+	if (args)
+		printf(" \033[33m%s\033[m\t", args);
+	else
+		printf("\t");
+	if (!args)
+		args = "";
+	if (ft_strlen(option) + ft_strlen(args) < 7)
+		printf("\t");
+	while (*desc)
+	{
+		w = -1;
+		while (*desc && ++w < 30)
+			printf("%c", *desc++);
+		while (*desc && !ft_isspace(*desc))
+			printf("%c", *desc++);
+		if (*desc && *desc++)
+			printf("\n\t\t\t");
+		else
+			printf("\n");
+	}
+}
+
 void	print_help(char **argv)
 {
-	printf("Usage:\t%s [options]\n\n"
-			"options:\n\t"
-			"--julia RE,IM\t"
-			"Instead of rendering the\n\t\t\t"
-			"mandelbrot set, render the\n\t\t\t"
-			"julia set for c = RE + IM * i.\n\t\t\t"
-			"RE and IM are decimals with a dot\n\t\t\t"
-			"as the thousands separator.\n\t"
-			"--center RE,IM\tMake RE + IM * i\n\t\t\t"
-			"the center of the window\n\t"
-			"--zoom FACTOR\tZoom the viewport by FACTOR\n\t"
-			"--help\t\t"
-			"Show this help\n",
-			argv[0]);
+	printf("\033[97mUsage:\033[m\t\033[32m%s\033[m \033[34mOPTIONS\033[m\n\n"
+		"\033[97mOPTIONS:\033[m\n", argv[0]);
+	print_option("--mandelbrot", NULL,
+		"Render the canonical mandelbrot set (z^2 + c).");
+	print_option("--julia", "RE,IM",
+		"Render the julia set for c = RE + IM * i. RE and IM are decimals"
+		" with a dot for the thousands separator.");
+	print_option("--multibrot", "D", "Render a multibrot (z^D + c). Beware that"
+		" this is very slow due to using the cexp() function, which can"
+		" also take decimal exponents.");
+	print_option("--center", "RE,IM", "Make RE + IM * i the center of"
+		" the viewport.");
+	print_option("--zoom", "FACTOR", "Zoom the viewport by FACTOR.");
+	print_option("--help", NULL, "Show this help.");
 }
 
 int	parse_help(int argc, char **argv)
 {
+	if (argc == 1)
+		return (print_help(argv), 1);
 	while (--argc)
 		if (!ft_strncmp(argv[argc], "--help", 6))
 			return (print_help(argv), 1);
@@ -406,23 +436,23 @@ t_complex	parse_complex(const char *s)
 
 void	init_fractal(t_fractal *fractal)
 {
-	fractal->fractal_type = MANDELBROT;
+	fractal->fractal_type = -1;
 	fractal->scale_re.preimage_min = 0;
-	fractal->scale_re.preimage_min = IMG_WIDTH;
+	fractal->scale_re.preimage_max = IMG_WIDTH;
 	fractal->scale_re.image_min = MIN_RE;
 	fractal->scale_re.image_max = MAX_RE;
 	fractal->scale_im.preimage_min = 0;
 	fractal->scale_im.preimage_min = IMG_HEIGHT;
-	fractal->scale_im.image_min = -((MAX_RE - MIN_RE) * IMG_HEIGHT) / (2.0
-			* IMG_WIDTH);
-	fractal->scale_im.image_max = ((MAX_RE - MIN_RE) * IMG_HEIGHT) / (2.0
-			* IMG_WIDTH);
+	fractal->scale_im.image_min = -((MAX_RE - MIN_RE) * (double)IMG_HEIGHT)
+		/ (2.0 * IMG_WIDTH);
+	fractal->scale_im.image_max = ((MAX_RE - MIN_RE) * (double)IMG_HEIGHT)
+		/ (2.0 * IMG_WIDTH);
 }
 
 void	parse_julia_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter", **argv), exit(1));
+		(printf("'%s' expects one parameter\n", **argv), exit(1));
 	++(*argv);
 	--(*argc);
 	fractal->julia_c = parse_complex(**argv);
@@ -435,7 +465,7 @@ void	parse_julia_param(int *argc, char ***argv, t_fractal *fractal)
 void	parse_multibrot_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter", **argv), exit(1));
+		(printf("'%s' expects one parameter\n", **argv), exit(1));
 	++(*argv);
 	--(*argc);
 	fractal->multibrot_exponent = ft_atof(**argv);
@@ -445,22 +475,74 @@ void	parse_multibrot_param(int *argc, char ***argv, t_fractal *fractal)
 		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(2));
 }
 
+t_complex	parse_center_param(int *argc, char ***argv)
+{
+	t_complex	center;
+
+	if (*argc < 2)
+		(printf("'%s' expects one parameter\n", **argv), exit(1));
+	++(*argv);
+	--(*argc);
+	center = parse_complex(**argv);
+	if (center.re == center.re)
+		return (center);
+	else
+		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(2));
+}
+
+double	parse_zoom_param(int *argc, char ***argv)
+{
+	double	zoom;
+
+	if (*argc < 2)
+		(printf("'%s' expects one parameter\n", **argv), exit(1));
+	++(*argv);
+	--(*argc);
+	zoom = ft_atof(**argv);
+	if (zoom == zoom)
+		return (zoom);
+	else
+		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(2));
+}
+
+void	apply_viewport(t_complex center, double zoom, t_fractal *fractal)
+{
+	static double	diff_re;
+	static double	diff_im;
+	double			tmp;
+
+	diff_re = MAX_RE - MIN_RE;
+	diff_im = (MAX_RE - MIN_RE) * (double)IMG_HEIGHT / (1. * IMG_WIDTH);
+	tmp = diff_re / (2 * zoom);
+	fractal->scale_re.image_min = center.re - tmp;
+	fractal->scale_re.image_max = center.re + tmp;
+	tmp = diff_im / (2 * zoom);
+	fractal->scale_im.image_min = center.im - tmp;
+	fractal->scale_im.image_max = center.im + tmp;
+}
+
 t_fractal	parse_options(int argc, char **argv)
 {
 	t_fractal	fractal;
+	t_complex	center;
+	double		zoom;
 
 	init_fractal(&fractal);
+	zoom = 1;
 	while (--argc)
 	{
-		if (!ft_strncmp(*(++argv), "--julia", 8))
+		if (!ft_strncmp(*(++argv), "--mandelbrot", 13))
+			fractal.fractal_type = MANDELBROT;
+		else if (!ft_strncmp(*(argv), "--julia", 8))
 			parse_julia_param(&argc, &argv, &fractal);
 		else if (!ft_strncmp(*(argv), "--multibrot", 12))
 			parse_multibrot_param(&argc, &argv, &fractal);
 		else if (!ft_strncmp(*(argv), "--center", 9))
-			parse_center_param(&argc, &argv, &fractal);
+			center = parse_center_param(&argc, &argv);
 		else if (!ft_strncmp(*(argv), "--zoom", 7))
-			parse_zoom_param(&argc, &argv, &fractal);
+			zoom = parse_zoom_param(&argc, &argv);
 	}
+	apply_viewport(center, zoom, &fractal);
 	return (fractal);
 }
 
@@ -473,22 +555,124 @@ void	init(void **mlx, void **mlx_win, t_img *img)
 		&img->line_length, &img->endian);
 }
 
-int	main(int argc, char **argv)
+typedef struct s_vars
 {
 	void		*mlx;
-	void		*mlx_win;
+	void		*win;
 	t_img		img;
 	t_fractal	fractal;
+}				t_vars;
+
+int	close_mlx(int keycode, t_vars *vars)
+{
+	if (keycode != 65307 && keycode != 113)
+		return (1);
+	mlx_destroy_window(vars->mlx, vars->win);
+	exit(0);
+}
+
+int	zoom(int keycode, t_vars *vars)
+{
+	double	zoom;
+	double	diff_re;
+	double	mid_re;
+	double	diff_im;
+	double	mid_im;
+
+	if (keycode != 122 && keycode != 120)
+		return (1);
+	diff_re = vars->fractal.scale_re.image_max
+		- vars->fractal.scale_re.image_min;
+	diff_im = vars->fractal.scale_im.image_max
+		- vars->fractal.scale_im.image_min;
+	zoom = (MAX_RE - MIN_RE) / diff_re;
+	if (keycode == 122)
+		zoom *= 1.1;
+	else if (keycode == 120)
+		zoom /= 1.1;
+	mid_re = vars->fractal.scale_re.image_min + diff_re / 2.0;
+	mid_im = vars->fractal.scale_im.image_min + diff_im / 2.0;
+	diff_im = (MAX_RE - MIN_RE) * (double)IMG_HEIGHT / (1. * IMG_WIDTH);
+	vars->fractal.scale_re.image_min = mid_re - (MAX_RE - MIN_RE) / (2. * zoom);
+	vars->fractal.scale_re.image_max = mid_re + (MAX_RE - MIN_RE) / (2. * zoom);
+	vars->fractal.scale_im.image_min = mid_im - diff_im / (2. * zoom);
+	vars->fractal.scale_im.image_max = mid_im + diff_im / (2. * zoom);
+	return (0);
+}
+
+int	translate(int keycode, t_vars *vars)
+{
+	double	zoom;
+
+	zoom = (MAX_RE - MIN_RE) / (double)(vars->fractal.scale_re.image_max
+		- vars->fractal.scale_re.image_min);
+	if (keycode == 104)
+	{
+		vars->fractal.scale_re.image_min -= SPEED / zoom;
+		vars->fractal.scale_re.image_max -= SPEED / zoom;
+	}
+	else if (keycode == 106)
+	{
+		vars->fractal.scale_im.image_min -= SPEED / zoom;
+		vars->fractal.scale_im.image_max -= SPEED / zoom;
+	}
+	else if (keycode == 107)
+	{
+		vars->fractal.scale_im.image_min += SPEED / zoom;
+		vars->fractal.scale_im.image_max += SPEED / zoom;
+	}
+	else if (keycode == 108)
+	{
+		vars->fractal.scale_re.image_min += SPEED / zoom;
+		vars->fractal.scale_re.image_max += SPEED / zoom;
+	}
+	return (0);
+}
+
+int	reset(int keycode, t_vars *vars)
+{
+	if (keycode != 114)
+		return (1);
+	vars->fractal.scale_re.image_min = MIN_RE;
+	vars->fractal.scale_re.image_max = MAX_RE;
+	vars->fractal.scale_im.image_min = -((MAX_RE - MIN_RE) * (double)IMG_HEIGHT)
+		/ (2.0 * IMG_WIDTH);
+	vars->fractal.scale_im.image_max = ((MAX_RE - MIN_RE) * (double)IMG_HEIGHT)
+		/ (2.0 * IMG_WIDTH);
+	return (0);
+}
+
+int	handle_keypress(int keycode, t_vars *vars)
+{
+	int	ret;
+
+	if (keycode == 122 || keycode == 120)
+		ret = zoom(keycode, vars);
+	else if (keycode == 114)
+		ret = reset(keycode, vars);
+	else if (keycode == 65307 || keycode == 113)
+		ret = close_mlx(keycode, vars);
+	ret = translate(keycode, vars);
+	return (render(vars->mlx, vars->win, &vars->img, vars->fractal), ret);
+}
+
+void	setup_hooks(t_vars *vars)
+{
+	mlx_hook(vars->win, 2, 1L << 0, handle_keypress, vars);
+}
+
+int	main(int argc, char **argv)
+{
+	t_vars	vars;
 
 	if (parse_help(argc, argv))
 		return (1);
-	fractal = parse_options(argc, argv);
-	if (fractal.fractal_type == -1)
+	vars.fractal = parse_options(argc, argv);
+	if (vars.fractal.fractal_type == -1)
 		return (print_help(argv), 2);
-	init(&mlx, &mlx_win, &img);
-	printf("fractal.julia_c.re: %f\n", fractal.julia_c.re);
-	printf("fractal.julia_c.im: %f\n", fractal.julia_c.im);
-	render(mlx, mlx_win, &img, fractal);
-	mlx_loop(mlx);
+	init(&vars.mlx, &vars.win, &vars.img);
+	render(vars.mlx, vars.win, &vars.img, vars.fractal);
+	setup_hooks(&vars);
+	mlx_loop(vars.mlx);
 	return (0);
 }
