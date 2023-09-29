@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/28 14:17:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/09/29 09:59:28 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/09/29 11:08:07 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define IMG_WIDTH 1920 / 5
-#define IMG_HEIGHT 1080 / 5
+#define IMG_WIDTH 1920 / 5.
+#define IMG_HEIGHT 1080 / 5.
 #define MIN_RE -3
 #define MAX_RE 2
 #define WIN_TITLE "fractol"
@@ -37,7 +37,6 @@
 #define COLOR_4 0x00FFAA00
 #define COLOR_5 0x00000200
 #define CRES 2048
-/* -950 + 2048 */
 #define CLRMAP_OFFSET 1098 + 200
 
 #define MANDELBROT 0
@@ -334,18 +333,31 @@ void	render(void *mlx, void *mlx_win, t_img *img, t_fractal fractal)
 	mlx_put_image_to_window(mlx, mlx_win, img->img, 0, 0);
 }
 
+size_t	ft_strwidth(const char *s)
+{
+	size_t	size;
+
+	size = 0;
+	while (s && *s++)
+	{
+		if (*(s - 1) == '\t')
+			size += 8;
+		else
+			++size;
+	}
+	return (size);
+}
+
 void	print_option(const char *option, const char *args, const char *desc)
 {
 	int	w;
 
-	printf("\t\033[34m%s\033[m", option);
+	if (option)
+		printf("\t\033[34m%s\033[m", option);
 	if (args)
-		printf(" \033[33m%s\033[m\t", args);
-	else
-		printf("\t");
-	if (!args)
-		args = "";
-	if (ft_strlen(option) + ft_strlen(args) < 7)
+		printf(" \033[33m%s\033[m", args);
+	w = 4 - (int)(9 + ft_strwidth(option) + ft_strwidth(args)) / 8;
+	while (w--)
 		printf("\t");
 	while (*desc)
 	{
@@ -354,11 +366,24 @@ void	print_option(const char *option, const char *args, const char *desc)
 			printf("%c", *desc++);
 		while (*desc && !ft_isspace(*desc))
 			printf("%c", *desc++);
+		printf("\n");
 		if (*desc && *desc++)
-			printf("\n\t\t\t");
-		else
-			printf("\n");
+			printf("\t\t\t\t");
 	}
+}
+
+void	print_runtime_bindings(void)
+{
+	printf("\033[97mRuntime keybindings:\033[m\n");
+	print_option("", "hjkl or arrows", "Navigate the mandelbrot set");
+	print_option("", "mouse left hold", "Navigate the mandelbrot set");
+	print_option("", "mouse right hold", "Navigate the mandelbrot set");
+	print_option("", "z or spacebar", "Zoom in");
+	print_option("", "x", "Zoom out");
+	print_option("", "r", "Reset viewport");
+	print_option("", ".", "Increase the gradient phase");
+	print_option("", ",", "Decrease the gradient phase");
+	print_option("", "q or esc", "Quit");
 }
 
 void	print_help(char **argv)
@@ -376,7 +401,12 @@ void	print_help(char **argv)
 	print_option("--center", "RE,IM", "Make RE + IM * i the center of"
 		" the viewport.");
 	print_option("--zoom", "FACTOR", "Zoom the viewport by FACTOR.");
-	print_option("--help", NULL, "Show this help.");
+	print_option("--winsize", "WIDTHxHEIGHT", "The window dimensions. Greatly influences performance.");
+	print_option("--gradient-phase", "P", "Colors are indexed through an array (modulo arr-length). This parameter adds an offset.");
+	print_option("--iterations", "I", "Number of iterations to perform until a point is deemed part of the set. More iterations -> deeper zoom.");
+	print_option("--modulus", "R", "Minimum modulus (argument) of a complex number required to rule it out as not part of the set.");
+	print_option("--help", NULL, "Show this help.\n");
+	print_runtime_bindings();
 }
 
 int	parse_help(int argc, char **argv)
@@ -443,9 +473,9 @@ void	init_fractal(t_fractal *fractal)
 	fractal->scale_re.image_max = MAX_RE;
 	fractal->scale_im.preimage_min = 0;
 	fractal->scale_im.preimage_min = IMG_HEIGHT;
-	fractal->scale_im.image_min = -((MAX_RE - MIN_RE) * (double)IMG_HEIGHT)
+	fractal->scale_im.image_min = -((MAX_RE - MIN_RE) * IMG_HEIGHT)
 		/ (2.0 * IMG_WIDTH);
-	fractal->scale_im.image_max = ((MAX_RE - MIN_RE) * (double)IMG_HEIGHT)
+	fractal->scale_im.image_max = ((MAX_RE - MIN_RE) * IMG_HEIGHT)
 		/ (2.0 * IMG_WIDTH);
 }
 
@@ -512,7 +542,7 @@ void	apply_viewport(t_complex center, double zoom, t_fractal *fractal)
 	double			tmp;
 
 	diff_re = MAX_RE - MIN_RE;
-	diff_im = (MAX_RE - MIN_RE) * (double)IMG_HEIGHT / (1. * IMG_WIDTH);
+	diff_im = (MAX_RE - MIN_RE) * IMG_HEIGHT / (1. * IMG_WIDTH);
 	tmp = diff_re / (2 * zoom);
 	fractal->scale_re.image_min = center.re - tmp;
 	fractal->scale_re.image_max = center.re + tmp;
@@ -592,7 +622,7 @@ int	zoom(int keycode, t_vars *vars)
 		zoom /= 1.1;
 	mid_re = vars->fractal.scale_re.image_min + diff_re / 2.0;
 	mid_im = vars->fractal.scale_im.image_min + diff_im / 2.0;
-	diff_im = (MAX_RE - MIN_RE) * (double)IMG_HEIGHT / (1. * IMG_WIDTH);
+	diff_im = (MAX_RE - MIN_RE) * IMG_HEIGHT / (1. * IMG_WIDTH);
 	vars->fractal.scale_re.image_min = mid_re - (MAX_RE - MIN_RE) / (2. * zoom);
 	vars->fractal.scale_re.image_max = mid_re + (MAX_RE - MIN_RE) / (2. * zoom);
 	vars->fractal.scale_im.image_min = mid_im - diff_im / (2. * zoom);
@@ -604,7 +634,7 @@ int	translate(int keycode, t_vars *vars)
 {
 	double	zoom;
 
-	zoom = (MAX_RE - MIN_RE) / (double)(vars->fractal.scale_re.image_max
+	zoom = (MAX_RE - MIN_RE) / (vars->fractal.scale_re.image_max
 		- vars->fractal.scale_re.image_min);
 	if (keycode == 104)
 	{
@@ -635,9 +665,9 @@ int	reset(int keycode, t_vars *vars)
 		return (1);
 	vars->fractal.scale_re.image_min = MIN_RE;
 	vars->fractal.scale_re.image_max = MAX_RE;
-	vars->fractal.scale_im.image_min = -((MAX_RE - MIN_RE) * (double)IMG_HEIGHT)
+	vars->fractal.scale_im.image_min = -((MAX_RE - MIN_RE) * IMG_HEIGHT)
 		/ (2.0 * IMG_WIDTH);
-	vars->fractal.scale_im.image_max = ((MAX_RE - MIN_RE) * (double)IMG_HEIGHT)
+	vars->fractal.scale_im.image_max = ((MAX_RE - MIN_RE) * IMG_HEIGHT)
 		/ (2.0 * IMG_WIDTH);
 	return (0);
 }
@@ -668,8 +698,6 @@ int	main(int argc, char **argv)
 	if (parse_help(argc, argv))
 		return (1);
 	vars.fractal = parse_options(argc, argv);
-	if (vars.fractal.fractal_type == -1)
-		return (print_help(argv), 2);
 	init(&vars.mlx, &vars.win, &vars.img);
 	render(vars.mlx, vars.win, &vars.img, vars.fractal);
 	setup_hooks(&vars);
