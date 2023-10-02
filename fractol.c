@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/28 14:17:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/02 09:39:07 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/02 21:30:56 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,9 +44,16 @@
 #define MANDELBROT 0
 #define JULIA 1
 #define MULTIBROT 2
+#define TRICORN 3
 
 #define OPTIONS_WIDTH 27
 #define DESC_WIDTH 40
+
+#define KC_ESC   65307
+#define KC_LEFT  65361
+#define KC_UP    65362
+#define KC_RIGHT 65363
+#define KC_DOWN  65364
 
 /* Not good, but bypasses -std=c89 flag */
 #ifndef NAN
@@ -70,10 +77,10 @@ typedef struct s_complex
 
 typedef struct s_scale
 {
-	double		preimage_min;
-	double		preimage_max;
-	double		img_min;
-	double		img_max;
+	double		old_min;
+	double		old_max;
+	double		new_min;
+	double		new_max;
 }				t_scale;
 
 typedef struct s_fractal
@@ -92,7 +99,7 @@ typedef struct s_fractal
 	double		min_re;
 	double		max_re;
 	double		zoom_factor;
-	double		mvmt_speed;
+	double		speed;
 }				t_fractal;
 
 typedef struct s_rgb
@@ -102,12 +109,22 @@ typedef struct s_rgb
 	int			b;
 }				t_rgb;
 
+typedef struct s_dragging
+{
+	int		x;
+	int		y;
+	int		re;
+	int		im;
+	t_scale	scale_re;
+	t_scale	scale_im;
+}			t_dragging;
 typedef struct s_vars
 {
 	void		*mlx;
 	void		*win;
 	t_img		img;
 	t_img		img2;
+	t_dragging	dragging;
 	t_fractal	fractal;
 }				t_vars;
 
@@ -213,25 +230,27 @@ void	init_colors(int colors[GRAD_SIZE], t_fractal *fractal)
 	int	off;
 	int	i;
 
+	if (fractal->gradient_phase % 10 == 1)
+		fractal->gradient_phase -= 1;
 	off = fractal->gradient_phase;
 	i = -1;
 	while (++i < GRAD_SIZE)
 	{
 		if (i < 0.16 * GRAD_SIZE)
 			colors[(off + i) % GRAD_SIZE] = interp_color(i, 0, 0.16 * GRAD_SIZE,
-				1);
+					1);
 		else if (i < 0.42 * GRAD_SIZE)
 			colors[(off + i) % GRAD_SIZE] = interp_color(i, 0.16 * GRAD_SIZE,
-				0.42 * GRAD_SIZE, 2);
+					0.42 * GRAD_SIZE, 2);
 		else if (i < 0.6425 * GRAD_SIZE)
 			colors[(off + i) % GRAD_SIZE] = interp_color(i, 0.42 * GRAD_SIZE,
-				0.6425 * GRAD_SIZE, 3);
+					0.6425 * GRAD_SIZE, 3);
 		else if (i < 0.8575 * GRAD_SIZE)
 			colors[(off + i) % GRAD_SIZE] = interp_color(i, 0.6425 * GRAD_SIZE,
-				0.8575 * GRAD_SIZE, 4);
+					0.8575 * GRAD_SIZE, 4);
 		else
 			colors[(off + i) % GRAD_SIZE] = interp_color(i, 0.8575 * GRAD_SIZE,
-				GRAD_SIZE, 5);
+					GRAD_SIZE, 5);
 	}
 }
 
@@ -241,10 +260,8 @@ int	color_from_iter(t_complex z, int iter, t_fractal *fractal)
 	static int	colors[GRAD_SIZE];
 	int			color_idx;
 
-	if (!colors[0])
-	{
+	if (!colors[0] || fractal->gradient_phase % 10 == 1)
 		init_colors(colors, fractal);
-	}
 	if (iter == fractal->max_iters)
 		return (0);
 	smoothed = log2(log2(z.re * z.re + z.im * z.im) / 2.);
@@ -285,6 +302,29 @@ int	render_mandelbrot(t_complex c, t_fractal *fractal)
 	return (color_from_iter(z, iter, fractal));
 }
 
+t_complex	conjugate(t_complex z)
+{
+	z.im *= -1;
+	return (z);
+}
+
+int	render_tricorn(t_complex c, t_fractal *fractal)
+{
+	t_complex	z;
+	int			iter;
+
+	z.re = 0.0;
+	z.im = 0.0;
+	iter = -1;
+	while (++iter < fractal->max_iters)
+	{
+		if (complex_modulus(z) > fractal->modulus)
+			break ;
+		z = complex_addition(complex_product(conjugate(z), conjugate(z)), c);
+	}
+	return (color_from_iter(z, iter, fractal));
+}
+
 int	render_multibrot(t_complex c, t_fractal *fractal)
 {
 	t_complex	z;
@@ -320,10 +360,10 @@ double	rescale(double coord, t_scale scale)
 {
 	double	image;
 
-	image = coord - scale.preimage_min;
-	image *= scale.img_max - scale.img_min;
-	image /= scale.preimage_max - scale.preimage_min;
-	image += scale.img_min;
+	image = coord - scale.old_min;
+	image *= scale.new_max - scale.new_min;
+	image /= scale.old_max - scale.old_min;
+	image += scale.new_min;
 	return (image);
 }
 
@@ -331,32 +371,23 @@ int	unrescale(double image, t_scale scale)
 {
 	double	coord;
 
-	coord = image - scale.img_min;
-	coord *= scale.preimage_max - scale.preimage_min;
-	coord /= scale.img_max - scale.img_min;
-	coord += scale.preimage_min;
+	coord = image - scale.new_min;
+	coord *= scale.old_max - scale.old_min;
+	coord /= scale.new_max - scale.new_min;
+	coord += scale.old_min;
 	return ((int)coord);
-}
-
-int	simple(t_complex c)
-{
-	t_rgb	rgb;
-
-	rgb.r = (int)(c.re + c.im);
-	rgb.g = (int)(c.re + c.im * c.im);
-	rgb.b = (int)(c.re + c.im * c.re);
-	return (int_from_rgb(&rgb));
 }
 
 int	compute_fractal_clr(t_complex c, t_fractal *fractal)
 {
-	/* return (simple(c)); */
 	if (fractal->fractal_type == MANDELBROT)
 		return (render_mandelbrot(c, fractal));
 	else if (fractal->fractal_type == JULIA)
 		return (render_julia(c, fractal));
 	else if (fractal->fractal_type == MULTIBROT)
 		return (render_multibrot(c, fractal));
+	else if (fractal->fractal_type == TRICORN)
+		return (render_tricorn(c, fractal));
 	return (0);
 }
 
@@ -372,14 +403,6 @@ void	render(t_vars *vars, int use_cache)
 	int				old_x;
 	int				old_y;
 
-	printf("%f\n", vars->fractal.scale_re.img_min);
-	printf("%f\n", vars->fractal.scale_re.img_max);
-	printf("pre %f\n", vars->fractal.scale_re.preimage_min);
-	printf("pre %f\n", vars->fractal.scale_re.preimage_max);
-	printf("%f\n", vars->fractal.scale_im.img_min);
-	printf("%f\n", vars->fractal.scale_im.img_max);
-	printf("pre %f\n", vars->fractal.scale_im.preimage_min);
-	printf("pre %f\n", vars->fractal.scale_im.preimage_max);
 	y = 0;
 	if (!use_cache)
 		parity = -1;
@@ -476,9 +499,11 @@ void	print_runtime_bindings(void)
 	print_option("", "mouse right hold", "Navigate the mandelbrot set");
 	print_option("", "z or spacebar", "Zoom in");
 	print_option("", "x", "Zoom out");
-	print_option("", "r", "reset_viewport viewport");
+	print_option("", "r", "Reset viewport");
 	print_option("", ".", "Increase the gradient phase");
 	print_option("", ",", "Decrease the gradient phase");
+	print_option("", "+", "Increase the number of iterations");
+	print_option("", "-", "Decrease the number of iterations");
 	print_option("", "q or esc", "Quit");
 }
 
@@ -578,15 +603,15 @@ t_complex	parse_complex(const char *s)
 void	init_fractal(t_fractal *fractal)
 {
 	fractal->fractal_type = MANDELBROT;
-	fractal->scale_re.preimage_min = 0;
-	fractal->scale_re.preimage_max = DEF_IMG_WIDTH;
-	fractal->scale_re.img_min = DEF_MIN_RE;
-	fractal->scale_re.img_max = DEF_MAX_RE;
-	fractal->scale_im.preimage_min = 0;
-	fractal->scale_im.preimage_max = DEF_IMG_HEIGHT;
-	fractal->scale_im.img_min = -((DEF_MAX_RE - DEF_MIN_RE) * DEF_IMG_HEIGHT)
+	fractal->scale_re.old_min = 0;
+	fractal->scale_re.old_max = DEF_IMG_WIDTH;
+	fractal->scale_re.new_min = DEF_MIN_RE;
+	fractal->scale_re.new_max = DEF_MAX_RE;
+	fractal->scale_im.old_min = 0;
+	fractal->scale_im.old_max = DEF_IMG_HEIGHT;
+	fractal->scale_im.new_min = -((DEF_MAX_RE - DEF_MIN_RE) * DEF_IMG_HEIGHT)
 		/ (2. * DEF_IMG_WIDTH);
-	fractal->scale_im.img_max = ((DEF_MAX_RE - DEF_MIN_RE) * DEF_IMG_HEIGHT)
+	fractal->scale_im.new_max = ((DEF_MAX_RE - DEF_MIN_RE) * DEF_IMG_HEIGHT)
 		/ (2. * DEF_IMG_WIDTH);
 	fractal->min_re = DEF_MIN_RE;
 	fractal->max_re = DEF_MAX_RE;
@@ -597,7 +622,7 @@ void	init_fractal(t_fractal *fractal)
 	fractal->title = DEF_WIN_TITLE;
 	fractal->modulus = DEF_MODULUS;
 	fractal->zoom_factor = DEF_ZOOM_FACTOR;
-	fractal->mvmt_speed = DEF_SPEED;
+	fractal->speed = DEF_SPEED;
 }
 
 void	parse_julia_param(int *argc, char ***argv, t_fractal *fractal)
@@ -666,11 +691,11 @@ void	apply_viewport(t_complex center, double zoom, t_fractal *fractal)
 	diff_im = (fractal->max_re - fractal->min_re) * fractal->img_height
 		/ fractal->img_width;
 	half = diff_re / (2. * zoom);
-	fractal->scale_re.img_min = center.re - half;
-	fractal->scale_re.img_max = center.re + half;
+	fractal->scale_re.new_min = center.re - half;
+	fractal->scale_re.new_max = center.re + half;
 	half = diff_im / (2. * zoom);
-	fractal->scale_im.img_min = center.im - half;
-	fractal->scale_im.img_max = center.im + half;
+	fractal->scale_im.new_min = center.im - half;
+	fractal->scale_im.new_max = center.im + half;
 }
 
 void	parse_winsize_param(int *argc, char ***argv, t_fractal *fractal)
@@ -682,13 +707,17 @@ void	parse_winsize_param(int *argc, char ***argv, t_fractal *fractal)
 	++(*argv);
 	--(*argc);
 	fractal->img_width = ft_atoi(**argv);
+	fractal->scale_re.old_max = fractal->img_width;
 	i = -1;
 	while ((**argv)[++i] && ft_tolower((**argv)[i]) != 'x')
 		;
 	if (!(**argv)[i])
 		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
 	else
+	{
 		fractal->img_height = ft_atoi(**argv + i + 1);
+		fractal->scale_im.old_max = fractal->img_height;
+	}
 }
 
 /* TODO
@@ -738,8 +767,8 @@ void	parse_mvmt_speed_param(int *argc, char ***argv, t_fractal *fractal)
 		(printf("'%s' expects one parameter\n", **argv), exit(2));
 	++(*argv);
 	--(*argc);
-	fractal->mvmt_speed = ft_atof(**argv);
-	if (fractal->mvmt_speed != fractal->mvmt_speed)
+	fractal->speed = ft_atof(**argv);
+	if (fractal->speed != fractal->speed)
 		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
 }
 
@@ -793,14 +822,17 @@ t_fractal	parse_options(int argc, char **argv)
 	t_complex	center;
 	double		zoom;
 
+	/* fractal.fractal_type = MANDELBROT; */
 	init_fractal(&fractal);
 	zoom = 1;
-	center.re = (fractal.scale_re.img_max + fractal.scale_re.img_min) / 2.;
-	center.im = (fractal.scale_im.img_max + fractal.scale_im.img_min) / 2.;
+	center.re = (fractal.scale_re.new_max + fractal.scale_re.new_min) / 2.;
+	center.im = (fractal.scale_im.new_max + fractal.scale_im.new_min) / 2.;
 	while (--argc)
 	{
 		if (!ft_strncmp(*(++argv), "--mandelbrot", 13))
 			fractal.fractal_type = MANDELBROT;
+		else if (!ft_strncmp(*(argv), "--tricorn", 10))
+			fractal.fractal_type = TRICORN;
 		else if (!ft_strncmp(*(argv), "--julia", 8))
 			parse_julia_param(&argc, &argv, &fractal);
 		else if (!ft_strncmp(*(argv), "--multibrot", 12))
@@ -816,112 +848,205 @@ t_fractal	parse_options(int argc, char **argv)
 	return (fractal);
 }
 
-int	close_mlx(int keycode, t_vars *vars)
+int	close_mlx(t_vars *vars)
 {
-	if (keycode != 65307 && keycode != 'q')
-		return (1);
 	mlx_destroy_window(vars->mlx, vars->win);
+	/* mlx_destroy_display(vars->mlx); */
 	exit(0);
 }
 
-int	zoom_viewport(int keycode, t_vars *vars)
+int	zoom_middle(int kc, t_vars *vars)
 {
-	double	zoom;
 	double	diff_re;
-	double	mid_re;
 	double	diff_im;
-	double	mid_im;
+	double	zoom_re;
+	double	zoom_im;
+	double	zoom;
 
-	printf("scale re img min: %f\n", vars->fractal.scale_re.img_min);
-	printf("scale re img max: %f\n", vars->fractal.scale_re.img_max);
-	printf("scale re preimg min: %f\n", vars->fractal.scale_re.preimage_min);
-	printf("scale re preimg max: %f\n", vars->fractal.scale_re.preimage_max);
-	if (keycode != 'z' && keycode != ' ' && keycode != 'x')
+	if (kc == 'z' || kc == ' ')
+		zoom = vars->fractal.zoom_factor;
+	else if (kc == 'x')
+		zoom = 1 / vars->fractal.zoom_factor;
+	else
 		return (1);
-	diff_re = vars->fractal.scale_re.img_max - vars->fractal.scale_re.img_min;
-	printf("diff: %f\n", diff_re);
-	diff_im = vars->fractal.scale_im.img_max - vars->fractal.scale_im.img_min;
-	zoom = (vars->fractal.max_re - vars->fractal.min_re) / diff_re;
-	if (keycode == 'z' || keycode == ' ')
-		zoom *= vars->fractal.zoom_factor;
-	else if (keycode == 'x')
-		zoom /= vars->fractal.zoom_factor;
-	mid_re = vars->fractal.scale_re.img_min + diff_re / 2.;
-	mid_im = vars->fractal.scale_im.img_min + diff_im / 2.;
-	diff_re = vars->fractal.max_re - vars->fractal.min_re;
-	diff_im = diff_re * vars->fractal.img_height / vars->fractal.img_width;
-	vars->fractal.scale_re.img_min = mid_re - diff_re / (2. * zoom);
-	vars->fractal.scale_re.img_max = mid_re + diff_re / (2. * zoom);
-	vars->fractal.scale_im.img_min = mid_im - diff_im / (2. * zoom);
-	vars->fractal.scale_im.img_max = mid_im + diff_im / (2. * zoom);
+	diff_re = vars->fractal.scale_re.new_max - vars->fractal.scale_re.new_min;
+	diff_im = vars->fractal.scale_im.new_max - vars->fractal.scale_im.new_min;
+	zoom_re = vars->fractal.scale_re.new_min + diff_re / 2.;
+	zoom_im = vars->fractal.scale_im.new_min + diff_im / 2.;
+	vars->fractal.scale_re.new_min = zoom_re - (vars->fractal.img_width / 2. / (double)vars->fractal.img_width) * diff_re / zoom;
+	vars->fractal.scale_re.new_max = zoom_re + (1. - vars->fractal.img_width / 2. / (double)vars->fractal.img_width) * diff_re / zoom;
+	vars->fractal.scale_im.new_min = zoom_im - (vars->fractal.img_height / 2. / (double)vars->fractal.img_height) * diff_im / zoom;
+	vars->fractal.scale_im.new_max = zoom_im + (1. - vars->fractal.img_height / 2. / (double)vars->fractal.img_height) * diff_im / zoom;
 	return (0);
 }
 
-int	translate(int keycode, t_vars *vars)
+int	zoom_to_mouse(int button, int x, int y, t_vars *vars)
+{
+	double	diff_re;
+	double	diff_im;
+	double	zoom_re;
+	double	zoom_im;
+	double	zoom;
+
+	if (button == 4)
+		zoom = vars->fractal.zoom_factor;
+	else if (button == 5)
+		zoom = 1 / vars->fractal.zoom_factor;
+	else
+		return (1);
+	diff_re = vars->fractal.scale_re.new_max - vars->fractal.scale_re.new_min;
+	diff_im = vars->fractal.scale_im.new_max - vars->fractal.scale_im.new_min;
+	zoom_re = rescale(x, vars->fractal.scale_re);
+	zoom_im = rescale(y, vars->fractal.scale_im);
+	vars->fractal.scale_re.new_min = zoom_re - (x / (double)vars->fractal.img_width) * diff_re / zoom;
+	vars->fractal.scale_re.new_max = zoom_re + (1. - x / (double)vars->fractal.img_width) * diff_re / zoom;
+	vars->fractal.scale_im.new_min = zoom_im - (y / (double)vars->fractal.img_height) * diff_im / zoom;
+	vars->fractal.scale_im.new_max = zoom_im + (1. - y / (double)vars->fractal.img_height) * diff_im / zoom;
+	return (0);
+}
+
+int	translate(int kc, int x, int y, t_vars *vars)
 {
 	double	zoom;
+	int		re;
+	double	x_diff;
+	double	y_diff;
 
 	zoom = (vars->fractal.max_re - vars->fractal.min_re)
-		/ (vars->fractal.scale_re.img_max - vars->fractal.scale_re.img_min);
-	if (keycode == 'h')
+		/ (vars->fractal.scale_re.new_max - vars->fractal.scale_re.new_min);
+	if (kc == -1)
 	{
-		vars->fractal.scale_re.img_min -= vars->fractal.mvmt_speed / zoom;
-		vars->fractal.scale_re.img_max -= vars->fractal.mvmt_speed / zoom;
+		x_diff = (double)(vars->dragging.x - x) * (vars->fractal.scale_re.new_max - vars->fractal.scale_re.new_min) / (double)vars->fractal.img_width;
+		y_diff = (double)(vars->dragging.y - y) * (vars->fractal.scale_im.new_max - vars->fractal.scale_im.new_min) / (double)vars->fractal.img_height;
+		vars->fractal.scale_re.new_min = vars->dragging.scale_re.new_min + x_diff;
+		vars->fractal.scale_re.new_max = vars->dragging.scale_re.new_max + x_diff;
+		vars->fractal.scale_im.new_min = vars->dragging.scale_im.new_min + y_diff;
+		vars->fractal.scale_im.new_max = vars->dragging.scale_im.new_max + y_diff;
+		return (0);
 	}
-	else if (keycode == 'j')
-	{
-		vars->fractal.scale_im.img_min += vars->fractal.mvmt_speed / zoom;
-		vars->fractal.scale_im.img_max += vars->fractal.mvmt_speed / zoom;
-	}
-	else if (keycode == 'k')
-	{
-		vars->fractal.scale_im.img_min -= vars->fractal.mvmt_speed / zoom;
-		vars->fractal.scale_im.img_max -= vars->fractal.mvmt_speed / zoom;
-	}
-	else if (keycode == 'l')
-	{
-		vars->fractal.scale_re.img_min += vars->fractal.mvmt_speed / zoom;
-		vars->fractal.scale_re.img_max += vars->fractal.mvmt_speed / zoom;
-	}
+	if (kc == 'h' || kc == 'k' || kc == KC_LEFT || kc == KC_UP)
+		zoom *= -1;
+	re = 1;
+	if (kc == 'j' || kc == 'k' || kc == KC_UP || kc == KC_DOWN)
+		re = 0;
+	vars->fractal.scale_re.new_min += vars->fractal.speed / zoom * re;
+	vars->fractal.scale_re.new_max += vars->fractal.speed / zoom * re;
+	vars->fractal.scale_im.new_min += vars->fractal.speed / zoom * !re;
+	vars->fractal.scale_im.new_max += vars->fractal.speed / zoom * !re;
 	return (0);
 }
 
-int	reset_viewport(int keycode, t_vars *vars)
+int	reset_viewport(int kc, t_vars *vars)
 {
 	double	half_i;
 
-	if (keycode != '0')
+	if (kc != '0')
 		return (1);
 	half_i = ((vars->fractal.max_re - vars->fractal.min_re)
 			* vars->fractal.img_height) / (2. * vars->fractal.img_width);
-	vars->fractal.scale_re.img_min = vars->fractal.min_re;
-	vars->fractal.scale_re.img_max = vars->fractal.max_re;
-	vars->fractal.scale_im.img_min = -half_i;
-	vars->fractal.scale_im.img_max = half_i;
+	vars->fractal.scale_re.new_min = vars->fractal.min_re;
+	vars->fractal.scale_re.new_max = vars->fractal.max_re;
+	vars->fractal.scale_im.new_min = -half_i;
+	vars->fractal.scale_im.new_max = half_i;
 	return (0);
 }
 
-int	handle_keypress(int keycode, t_vars *vars)
+int	change_fractal(int kc, t_vars *vars)
+{
+	if (kc == '1')
+		return (vars->fractal.fractal_type = MANDELBROT, 0);
+	else if (kc == '2')
+	{
+		vars->fractal.julia_c.re = -0.7;
+		vars->fractal.julia_c.im = 0.27015;
+		return (vars->fractal.fractal_type = JULIA, 0);
+	}
+	else if (kc == '3')
+	{
+		vars->fractal.multibrot_exponent = 3.1415926535897932384626;
+		return (vars->fractal.fractal_type = MULTIBROT, 0);
+	}
+	else if (kc == '4')
+		return (vars->fractal.fractal_type = TRICORN, 0);
+	return (1);
+}
+
+void	change_gradient_phase(int kc, t_vars *vars)
+{
+	if (kc == ',')
+		vars->fractal.gradient_phase -= 100;
+	else if (kc == '.')
+		vars->fractal.gradient_phase += 100;
+	if (vars->fractal.gradient_phase % 10 == 0)
+		++vars->fractal.gradient_phase;
+}
+
+void	change_iterations(int kc, t_vars *vars)
+{
+	if (kc == '-')
+		vars->fractal.max_iters -= 1;
+	else if (kc == '=')
+		vars->fractal.max_iters += 1;
+	if (vars->fractal.max_iters < 1)
+		vars->fractal.max_iters = 1;
+	printf("Max iterations: %d\n", vars->fractal.max_iters);
+}
+
+int	keydown_hook(int kc, t_vars *vars)
 {
 	int	ret;
 
 	ret = 1;
-	if (keycode == 'z' || keycode == ' ' || keycode == 'x')
-		ret = zoom_viewport(keycode, vars);
-	else if (keycode == '0')
-		ret = reset_viewport(keycode, vars);
-	else if (keycode == 65307 || keycode == 'q')
-		ret = close_mlx(keycode, vars);
-	else if (keycode == 'h' || keycode == 'j' || keycode == 'k' || keycode == 'l')
-		ret = translate(keycode, vars);
-	else if (keycode == 'r')
+	if (kc == 'z' || kc == ' ' || kc == 'x')
+		ret = zoom_middle(kc, vars);
+	else if (kc == '0')
+		ret = reset_viewport(kc, vars);
+	else if (kc == KC_ESC || kc == 'q')
+		ret = close_mlx(vars);
+	else if (kc == 'h' || kc == 'j' || kc == 'k'
+		|| kc == 'l' || (kc >= KC_LEFT && kc <= KC_DOWN))
+		ret = translate(kc, -1, -1, vars);
+	else if (kc == 'r')
 		return (render(vars, 0), ret);
+	else if (kc >= '1' && kc <= '9')
+		ret = change_fractal(kc, vars);
+	else if (kc == ',' || kc == '.')
+		return (change_gradient_phase(kc, vars), render(vars, 0), 0);
+	else if (kc == '-' || kc == '=')
+		change_iterations(kc, vars);
 	return (render(vars, 1), ret);
+}
+
+int	mouse_down_hook(int button, int x, int y, t_vars *vars)
+{
+	int	ret;
+
+	ret = 1;
+	if (button == 4 || button == 5)
+		ret = zoom_to_mouse(button, x, y, vars);
+	else if (button == 1)
+	{
+		vars->dragging.x = x;
+		vars->dragging.y = y;
+		vars->dragging.scale_re = vars->fractal.scale_re;
+		vars->dragging.scale_im = vars->fractal.scale_im;
+		return (render(vars, 0), 0);
+	}
+	return (render(vars, 1), ret);
+}
+
+int	mouse_move_hook(int x, int y, t_vars *vars)
+{
+	translate(-1, x, y, vars);
+	return (render(vars, 1), 0);
 }
 
 void	setup_hooks(t_vars *vars)
 {
-	mlx_hook(vars->win, 2, 1L << 0, handle_keypress, vars);
+	mlx_hook(vars->win, 2, 1L << 0, keydown_hook, vars);
+	mlx_hook(vars->win, 4, 1L << 2, mouse_down_hook, vars);
+	mlx_hook(vars->win, 6, 1L << 8, mouse_move_hook, vars);
+	mlx_hook(vars->win, 17, 0L, close_mlx, vars);
 }
 
 void	init(t_vars *vars)
@@ -946,6 +1071,8 @@ int	main(int argc, char **argv)
 	if (parse_help(argc, argv))
 		return (1);
 	vars.fractal = parse_options(argc, argv);
+	vars.fractal.gradient_phase = 100;
+	vars.fractal.max_iters = 100;
 	init(&vars);
 	render(&vars, 0);
 	setup_hooks(&vars);
