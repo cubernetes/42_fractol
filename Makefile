@@ -6,7 +6,7 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/28 14:29:52 by tosuman           #+#    #+#              #
-#    Updated: 2023/09/29 12:51:12 by tosuman          ###   ########.fr        #
+#    Updated: 2023/10/02 05:14:40 by tosuman          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,6 +24,7 @@ LIBFT_DIR = ./libft
 MINILIBX_DIR = ./minilibx-linux
 
 CC = cc
+# CFLAGS = -O3 -I$(LIBFT_DIR) -I$(MINILIBX_DIR)
 CFLAGS = -O3 -Wall -Wextra -Werror -pedantic \
 		 -std=c89 -Wconversion -I$(LIBFT_DIR) -I$(MINILIBX_DIR)
 LDFLAGS = -L$(LIBFT_DIR) -L$(MINILIBX_DIR) \
@@ -31,14 +32,15 @@ LDFLAGS = -L$(LIBFT_DIR) -L$(MINILIBX_DIR) \
 
 all: $(NAME)
 
-$(NAME): $(MINILIBX) $(LIBFT) $(OBJ)
-	 $(CC) -o $@ $(OBJ) $(LDFLAGS)
+$(NAME): $(MINILIBX_DIR)/$(MINILIBX) $(LIBFT_DIR)/$(LIBFT) $(OBJ)
+	$(CC) -o $@ $(OBJ) $(LDFLAGS)
+	make
 
-$(LIBFT):
-	make -C $(LIBFT_DIR) $(LIBFT)
+$(LIBFT_DIR)/$(LIBFT):
+	make -C $(LIBFT_DIR)
 
-$(MINILIBX):
-	make -C $(MINILIBX_DIR) $(MINILIBX)
+$(MINILIBX_DIR)/$(MINILIBX):
+	make -C $(MINILIBX_DIR)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -52,12 +54,6 @@ fclean: clean
 	make -C $(LIBFT_DIR) $@
 	$(RM) $(NAME)
 
-libftre:
-	make -C $(LIBFT_DIR) re
+re: fclean all
 
-minilibxre:
-	make -C $(MINILIBX_DIR) re
-
-re: fclean libftre minilibxre all
-
-.PHONY: re fclean clean all libftre minilibxre
+.PHONY: re fclean clean all
