@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/28 14:17:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/02 08:30:23 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/02 09:39:07 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/* TODO Add defaults to help menu */
 #define DEF_IMG_WIDTH 1920
 #define DEF_IMG_HEIGHT 1080
 #define DEF_MIN_RE -3
@@ -371,7 +372,17 @@ void	render(t_vars *vars, int use_cache)
 	int				old_x;
 	int				old_y;
 
+	printf("%f\n", vars->fractal.scale_re.img_min);
+	printf("%f\n", vars->fractal.scale_re.img_max);
+	printf("pre %f\n", vars->fractal.scale_re.preimage_min);
+	printf("pre %f\n", vars->fractal.scale_re.preimage_max);
+	printf("%f\n", vars->fractal.scale_im.img_min);
+	printf("%f\n", vars->fractal.scale_im.img_max);
+	printf("pre %f\n", vars->fractal.scale_im.preimage_min);
+	printf("pre %f\n", vars->fractal.scale_im.preimage_max);
 	y = 0;
+	if (!use_cache)
+		parity = -1;
 	while (y < vars->fractal.img_height)
 	{
 		x = 0;
@@ -572,7 +583,7 @@ void	init_fractal(t_fractal *fractal)
 	fractal->scale_re.img_min = DEF_MIN_RE;
 	fractal->scale_re.img_max = DEF_MAX_RE;
 	fractal->scale_im.preimage_min = 0;
-	fractal->scale_im.preimage_min = DEF_IMG_HEIGHT;
+	fractal->scale_im.preimage_max = DEF_IMG_HEIGHT;
 	fractal->scale_im.img_min = -((DEF_MAX_RE - DEF_MIN_RE) * DEF_IMG_HEIGHT)
 		/ (2. * DEF_IMG_WIDTH);
 	fractal->scale_im.img_max = ((DEF_MAX_RE - DEF_MIN_RE) * DEF_IMG_HEIGHT)
@@ -681,7 +692,7 @@ void	parse_winsize_param(int *argc, char ***argv, t_fractal *fractal)
 }
 
 /* TODO
- * Only allow numeric arguments
+ * Only allow numeric arguments to atof/atoi
  */
 void	parse_grad_phase_param(int *argc, char ***argv, t_fractal *fractal)
 {
@@ -784,6 +795,8 @@ t_fractal	parse_options(int argc, char **argv)
 
 	init_fractal(&fractal);
 	zoom = 1;
+	center.re = (fractal.scale_re.img_max + fractal.scale_re.img_min) / 2.;
+	center.im = (fractal.scale_im.img_max + fractal.scale_im.img_min) / 2.;
 	while (--argc)
 	{
 		if (!ft_strncmp(*(++argv), "--mandelbrot", 13))
@@ -819,9 +832,14 @@ int	zoom_viewport(int keycode, t_vars *vars)
 	double	diff_im;
 	double	mid_im;
 
+	printf("scale re img min: %f\n", vars->fractal.scale_re.img_min);
+	printf("scale re img max: %f\n", vars->fractal.scale_re.img_max);
+	printf("scale re preimg min: %f\n", vars->fractal.scale_re.preimage_min);
+	printf("scale re preimg max: %f\n", vars->fractal.scale_re.preimage_max);
 	if (keycode != 'z' && keycode != ' ' && keycode != 'x')
 		return (1);
 	diff_re = vars->fractal.scale_re.img_max - vars->fractal.scale_re.img_min;
+	printf("diff: %f\n", diff_re);
 	diff_im = vars->fractal.scale_im.img_max - vars->fractal.scale_im.img_min;
 	zoom = (vars->fractal.max_re - vars->fractal.min_re) / diff_re;
 	if (keycode == 'z' || keycode == ' ')
@@ -852,13 +870,13 @@ int	translate(int keycode, t_vars *vars)
 	}
 	else if (keycode == 'j')
 	{
-		vars->fractal.scale_im.img_min -= vars->fractal.mvmt_speed / zoom;
-		vars->fractal.scale_im.img_max -= vars->fractal.mvmt_speed / zoom;
+		vars->fractal.scale_im.img_min += vars->fractal.mvmt_speed / zoom;
+		vars->fractal.scale_im.img_max += vars->fractal.mvmt_speed / zoom;
 	}
 	else if (keycode == 'k')
 	{
-		vars->fractal.scale_im.img_min += vars->fractal.mvmt_speed / zoom;
-		vars->fractal.scale_im.img_max += vars->fractal.mvmt_speed / zoom;
+		vars->fractal.scale_im.img_min -= vars->fractal.mvmt_speed / zoom;
+		vars->fractal.scale_im.img_max -= vars->fractal.mvmt_speed / zoom;
 	}
 	else if (keycode == 'l')
 	{
