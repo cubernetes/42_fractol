@@ -6,15 +6,15 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 01:00:13 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 03:38:37 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/03 08:41:02 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "./minilibx-linux/mlx.h"
-#include "./minilibx-linux/mlx_int.h"
-#include <X11/Xlib.h>
+#include <fractol.h>
 #include <libft.h>
 #include <mlx.h>
+#include <mlx_int.h>
+#include <X11/Xlib.h>
 
 int	mlx_get_window_dim(void *mlx_ptr, void *win_ptr, int *width, int *height)
 {
@@ -26,15 +26,6 @@ int	mlx_get_window_dim(void *mlx_ptr, void *win_ptr, int *width, int *height)
 	*width = w_attr.width;
 	*height = w_attr.height;
 	return (status);
-}
-
-int	mlx_int_wait_first_expose(t_xvar *xvar, Window win)
-{
-	XEvent	ev;
-
-	XWindowEvent(xvar->display, win, ExposureMask, &ev);
-	XPutBackEvent(xvar->display, &ev);
-	return (0);
 }
 
 /* I have no idea what I'm doing, but ChatGPT tells me
@@ -67,9 +58,7 @@ int	mlx_int_resizable_win(t_xvar *xvar, Window win, int w, int h)
 	hints.max_aspect.y = 1;
 	hints.min_aspect.x = 1;
 	hints.min_aspect.y = 2;
-	toto = 0;
-	XSetWMNormalHints(xvar->display, win, &hints);
-	return (0);
+	return (XSetWMNormalHints(xvar->display, win, &hints), 0);
 }
 
 void	*mlx_new_resizable_window(t_xvar *xvar, int size_x, int size_y,
@@ -79,13 +68,11 @@ void	*mlx_new_resizable_window(t_xvar *xvar, int size_x, int size_y,
 	XSetWindowAttributes	xswa;
 	XGCValues				xgcv;
 
-	xswa.background_pixel = 0;
-	xswa.border_pixel = (unsigned long)-1;
-	xswa.colormap = xvar->cmap;
-	xswa.event_mask = 0xFFFFFF;
-	new_win = malloc(sizeof(*new_win));
+	new_win = malloc((xswa.background_pixel = 0,
+				xswa.border_pixel = (unsigned long)(-1), xswa.colormap
+				= xvar->cmap, xswa.event_mask = 0xFFFFFF, sizeof(*new_win)));
 	if (!new_win)
-		return ((void *)0);
+		return (NULL);
 	new_win->window = XCreateWindow(xvar->display, xvar->root, 0, 0,
 			(unsigned int)size_x, (unsigned int)size_y, 0, CopyFromParent,
 			InputOutput, xvar->visual,
@@ -93,16 +80,27 @@ void	*mlx_new_resizable_window(t_xvar *xvar, int size_x, int size_y,
 	mlx_int_resizable_win(xvar, new_win->window, size_x, size_y);
 	XStoreName(xvar->display, new_win->window, title);
 	XSetWMProtocols(xvar->display, new_win->window, &(xvar->wm_delete_window),
-		1);
-	xgcv.foreground = (unsigned long)-1;
-	xgcv.function = GXcopy;
-	xgcv.plane_mask = AllPlanes;
-	new_win->gc = XCreateGC(xvar->display, new_win->window,
-			GCFunction | GCPlaneMask | GCForeground, &xgcv);
+		(xgcv.foreground = (unsigned long)(-1), 1));
+	(free(NULL), xgcv.function = GXcopy, xgcv.plane_mask = AllPlanes);
+	new_win->gc = XCreateGC(xvar->display, new_win->window, GCFunction
+			| GCPlaneMask | GCForeground, &xgcv);
 	new_win->next = xvar->win_list;
 	xvar->win_list = new_win;
 	ft_bzero(&(new_win->hooks), sizeof(new_win->hooks));
 	XMapRaised(xvar->display, new_win->window);
-	mlx_int_wait_first_expose(xvar, new_win->window);
-	return (new_win);
+	return (mlx_int_wait_first_expose(xvar, new_win->window), new_win);
+}
+
+void	mlx_pixel_put_buf(t_fimg *data, int x, int y, int color)
+{
+	char	*dst;
+
+	dst = data->addr + (y * data->line_length + x * (data->bpp / 8));
+	*(unsigned int *)dst = (unsigned int)color;
+}
+
+int	mlx_pixel_get_buf(t_fimg *data, int x, int y)
+{
+	return (*(int *)(data->addr + (y * data->line_length + x * (data->bpp
+				/ 8))));
 }
