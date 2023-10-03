@@ -6,129 +6,42 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/28 14:17:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/02 21:30:56 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/03 04:33:49 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "fractol.h"
 #include "./libft/libft.h"
 #include "./minilibx-linux/mlx.h"
-#include <complex.h>
-#include <libft.h>
+#include "minilibx-linux/mlx_int.h"
+/* #include <libft.h> */
+/* #include <mlx.h> */
+#include <X11/X.h>
+#include <X11/Xlib.h>
 #include <math.h>
-#include <mlx.h>
+#include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-/* TODO Add defaults to help menu */
-#define DEF_IMG_WIDTH 1920
-#define DEF_IMG_HEIGHT 1080
-#define DEF_MIN_RE -3
-#define DEF_MAX_RE 2
-#define DEF_WIN_TITLE "fractol"
-#define DEF_SPEED 0.1
-#define DEF_ZOOM_FACTOR 1.1
+void	setup_hooks(t_vars *vars);
 
-#define DEF_MAX_ITERS 80
-#define DEF_MODULUS 4
-
-/* Same colorscheme that wikipedia uses */
-#define COLOR_1 0x00000764
-#define COLOR_2 0x00206BCB
-#define COLOR_3 0x00EDFFFF
-#define COLOR_4 0x00FFAA00
-#define COLOR_5 0x00000200
-#define GRAD_SIZE 2048
-#define DEF_GRADIENT_PHASE 1100
-
-#define MANDELBROT 0
-#define JULIA 1
-#define MULTIBROT 2
-#define TRICORN 3
-
-#define OPTIONS_WIDTH 27
-#define DESC_WIDTH 40
-
-#define KC_ESC   65307
-#define KC_LEFT  65361
-#define KC_UP    65362
-#define KC_RIGHT 65363
-#define KC_DOWN  65364
-
-/* Not good, but bypasses -std=c89 flag */
-#ifndef NAN
-# define NAN 0.0
-#endif
-
-typedef struct s_img
+int	ft_strcmp(char const *s1, char const *s2)
 {
-	void		*img;
-	char		*addr;
-	int			bpp;
-	int			line_length;
-	int			endian;
-}				t_img;
+	unsigned char	*us1;
+	unsigned char	*us2;
 
-typedef struct s_complex
-{
-	double		re;
-	double		im;
-}				t_complex;
+	us1 = (unsigned char *) s1;
+	us2 = (unsigned char *) s2;
+	while (*us1 && *us2 && *us1 == *us2)
+	{
+		++us1;
+		++us2;
+	}
+	return (*us1 - *us2);
+}
 
-typedef struct s_scale
-{
-	double		old_min;
-	double		old_max;
-	double		new_min;
-	double		new_max;
-}				t_scale;
-
-typedef struct s_fractal
-{
-	int			fractal_type;
-	double		multibrot_exponent;
-	t_complex	julia_c;
-	t_scale		scale_re;
-	t_scale		scale_im;
-	int			img_width;
-	int			img_height;
-	char		*title;
-	int			max_iters;
-	int			gradient_phase;
-	int			modulus;
-	double		min_re;
-	double		max_re;
-	double		zoom_factor;
-	double		speed;
-}				t_fractal;
-
-typedef struct s_rgb
-{
-	int			r;
-	int			g;
-	int			b;
-}				t_rgb;
-
-typedef struct s_dragging
-{
-	int		x;
-	int		y;
-	int		re;
-	int		im;
-	t_scale	scale_re;
-	t_scale	scale_im;
-}			t_dragging;
-typedef struct s_vars
-{
-	void		*mlx;
-	void		*win;
-	t_img		img;
-	t_img		img2;
-	t_dragging	dragging;
-	t_fractal	fractal;
-}				t_vars;
-
-void	mlx_pixel_put_buf(t_img *data, int x, int y, int color)
+void	mlx_pixel_put_buf(t_fimg *data, int x, int y, int color)
 {
 	char	*dst;
 
@@ -136,7 +49,7 @@ void	mlx_pixel_put_buf(t_img *data, int x, int y, int color)
 	*(unsigned int *)dst = (unsigned int)color;
 }
 
-int	mlx_pixel_get_buf(t_img *data, int x, int y)
+int	mlx_pixel_get_buf(t_fimg *data, int x, int y)
 {
 	return (*(int *)(data->addr + (y * data->line_length
 			+ x * (data->bpp / 8))));
@@ -195,13 +108,13 @@ int	interp_color(int i, double start, double end, int color_idx)
 	t_rgb	rgb_end;
 	double	unit;
 
-	if (color_idx == 1)
+	if (1 == color_idx)
 		(rgb_from_int(&rgb_start, COLOR_1), rgb_from_int(&rgb_end, COLOR_2));
-	else if (color_idx == 2)
+	else if (2 == color_idx)
 		(rgb_from_int(&rgb_start, COLOR_2), rgb_from_int(&rgb_end, COLOR_3));
-	else if (color_idx == 3)
+	else if (3 == color_idx)
 		(rgb_from_int(&rgb_start, COLOR_3), rgb_from_int(&rgb_end, COLOR_4));
-	else if (color_idx == 4)
+	else if (4 == color_idx)
 		(rgb_from_int(&rgb_start, COLOR_4), rgb_from_int(&rgb_end, COLOR_5));
 	else
 		(rgb_from_int(&rgb_start, COLOR_5), rgb_from_int(&rgb_end, COLOR_1));
@@ -217,20 +130,12 @@ double	log2(double x)
 	return (log(x) / log(2));
 }
 
-void	print_color(int color)
-{
-	t_rgb	rgb;
-
-	rgb_from_int(&rgb, color);
-	printf("%d, %d, %d\n", rgb.r, rgb.g, rgb.b);
-}
-
 void	init_colors(int colors[GRAD_SIZE], t_fractal *fractal)
 {
-	int	off;
 	int	i;
+	int	off;
 
-	if (fractal->gradient_phase % 10 == 1)
+	if (1 == fractal->gradient_phase % 10)
 		fractal->gradient_phase -= 1;
 	off = fractal->gradient_phase;
 	i = -1;
@@ -256,11 +161,11 @@ void	init_colors(int colors[GRAD_SIZE], t_fractal *fractal)
 
 int	color_from_iter(t_complex z, int iter, t_fractal *fractal)
 {
-	double		smoothed;
 	static int	colors[GRAD_SIZE];
+	double		smoothed;
 	int			color_idx;
 
-	if (!colors[0] || fractal->gradient_phase % 10 == 1)
+	if (1 == fractal->gradient_phase % 10 || !colors[0])
 		init_colors(colors, fractal);
 	if (iter == fractal->max_iters)
 		return (0);
@@ -380,13 +285,13 @@ int	unrescale(double image, t_scale scale)
 
 int	compute_fractal_clr(t_complex c, t_fractal *fractal)
 {
-	if (fractal->fractal_type == MANDELBROT)
+	if (MANDELBROT == fractal->fractal_type)
 		return (render_mandelbrot(c, fractal));
-	else if (fractal->fractal_type == JULIA)
+	else if (JULIA == fractal->fractal_type)
 		return (render_julia(c, fractal));
-	else if (fractal->fractal_type == MULTIBROT)
+	else if (MULTIBROT == fractal->fractal_type)
 		return (render_multibrot(c, fractal));
-	else if (fractal->fractal_type == TRICORN)
+	else if (TRICORN == fractal->fractal_type)
 		return (render_tricorn(c, fractal));
 	return (0);
 }
@@ -403,13 +308,14 @@ void	render(t_vars *vars, int use_cache)
 	int				old_x;
 	int				old_y;
 
-	y = 0;
+	vars->render_mutex = True;
 	if (!use_cache)
 		parity = -1;
-	while (y < vars->fractal.img_height)
+	y = -1;
+	while (++y < vars->fractal.img_height)
 	{
-		x = 0;
-		while (x < vars->fractal.img_width)
+		x = -1;
+		while (++x < vars->fractal.img_width)
 		{
 			c.re = rescale((double)x, vars->fractal.scale_re);
 			c.im = rescale((double)y, vars->fractal.scale_im);
@@ -433,17 +339,16 @@ void	render(t_vars *vars, int use_cache)
 					color = compute_fractal_clr(c, &vars->fractal);
 				mlx_pixel_put_buf(&vars->img2, x, y, color);
 			}
-			x += 1;
 		}
-		y += 1;
 	}
 	if (parity || !use_cache)
 		mlx_put_image_to_window(vars->mlx, vars->win, vars->img.img, 0, 0);
 	else
 		mlx_put_image_to_window(vars->mlx, vars->win, vars->img2.img, 0, 0);
 	parity = !parity;
-	old_scale_re = vars->fractal.scale_re;
 	old_scale_im = vars->fractal.scale_im;
+	old_scale_re = vars->fractal.scale_re;
+	vars->render_mutex = False;
 }
 
 size_t	ft_strwidth(const char *s, size_t tabsize)
@@ -453,7 +358,7 @@ size_t	ft_strwidth(const char *s, size_t tabsize)
 	size = 0;
 	while (s && *s++)
 	{
-		if (*(s - 1) == '\t')
+		if ('\t' == *(s - 1))
 			size += tabsize;
 		else
 			++size;
@@ -472,20 +377,20 @@ void	print_option(const char *option, const char *args, const char *desc)
 	int	w;
 
 	w = OPTIONS_WIDTH - (int)(ft_strwidth(option, 4) + ft_strwidth(args, 4));
-	if (option && printf("    \033[34m%s\033[m", option))
+	if (option && dprintf(1, "    \033[34m%s\033[m", option))
 		w -= 4;
-	if (args && printf(" \033[33m%s\033[m", args))
+	if (args && dprintf(1, " \033[33m%s\033[m", args))
 		w -= 1;
 	while (w-- > 0)
-		printf(" ");
+		dprintf(1, " ");
 	while (*desc)
 	{
 		w = -1;
 		while (*desc && ++w < DESC_WIDTH)
-			printf("%c", *desc++);
+			dprintf(1, "%c", *desc++);
 		while (*desc && !ft_isspace(*desc))
-			printf("%c", *desc++);
-		printf("\n");
+			dprintf(1, "%c", *desc++);
+		dprintf(1, "\n");
 		if (*desc && *desc++)
 			ft_putstr_mult(" ", OPTIONS_WIDTH);
 	}
@@ -493,7 +398,7 @@ void	print_option(const char *option, const char *args, const char *desc)
 
 void	print_runtime_bindings(void)
 {
-	printf("\033[97mRUNTIME KEYBINDINGS:\033[m\n");
+	dprintf(1, "\033[97mRUNTIME KEYBINDINGS:\033[m\n");
 	print_option("", "hjkl or arrows", "Navigate the mandelbrot set");
 	print_option("", "mouse left hold", "Navigate the mandelbrot set");
 	print_option("", "mouse right hold", "Navigate the mandelbrot set");
@@ -525,7 +430,7 @@ void	print_more_help(void)
 
 void	print_help(char **argv)
 {
-	printf("\033[97mUSAGE:\033[m\n    \033[32m%s\033[m \033[34mOPTIONS\033[m\n\n"
+	dprintf(1, "\033[97mUSAGE:\033[m\n    \033[32m%s\033[m \033[34mOPTIONS\033[m\n\n"
 		"\033[97mOPTIONS:\033[m\n", argv[0]);
 	print_option("--mandelbrot", NULL,
 		"Render the canonical mandelbrot set (z^2 + c).");
@@ -538,19 +443,18 @@ void	print_help(char **argv)
 	print_option("--center", "RE,IM", "Make RE+IM*i the center of the window.");
 	print_option("--zoom", "FACTOR", "Zoom the viewport by FACTOR.");
 	print_option("--zoom-factor", "FACTOR", "The factor by which the factor "
-			"will be changed.");
+		"will be changed.");
 	print_option("--mvmt-speed", "SPEED", "Viewport translation speed/step.");
 	print_more_help();
 	print_runtime_bindings();
 }
 
-
 int	parse_help(int argc, char **argv)
 {
-	if (argc == 1)
+	if (1 == argc)
 		return (print_help(argv), 1);
 	while (--argc)
-		if (!ft_strncmp(argv[argc], "--help", 6))
+		if (!ft_strcmp(argv[argc], "--help"))
 			return (print_help(argv), 1);
 	return (0);
 }
@@ -565,8 +469,8 @@ double	ft_atof(const char *s)
 	power = 1.0;
 	while (ft_isspace(*s))
 		++s;
-	sign = ((*s != '-') - 1) * 2 + 1;
-	if (*s == '-' || *s == '+')
+	sign = (('-' != *s) - 1) * 2 + 1;
+	if ('-' == *s || '+' == *s)
 		++s;
 	while (ft_isdigit(*s))
 	{
@@ -623,32 +527,35 @@ void	init_fractal(t_fractal *fractal)
 	fractal->modulus = DEF_MODULUS;
 	fractal->zoom_factor = DEF_ZOOM_FACTOR;
 	fractal->speed = DEF_SPEED;
+	fractal->julia_c.re = -0.7;
+	fractal->julia_c.im = 0.27015;
+	fractal->multibrot_exponent = 3.1415926535897932384626;
 }
 
 void	parse_julia_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->julia_c = parse_complex(**argv);
 	if (fractal->julia_c.re == fractal->julia_c.re)
 		fractal->fractal_type = JULIA;
 	else
-		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
+		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 }
 
 void	parse_multibrot_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->multibrot_exponent = ft_atof(**argv);
 	if (fractal->multibrot_exponent == fractal->multibrot_exponent)
 		fractal->fractal_type = MULTIBROT;
 	else
-		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
+		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 }
 
 t_complex	parse_center_param(int *argc, char ***argv)
@@ -656,14 +563,14 @@ t_complex	parse_center_param(int *argc, char ***argv)
 	t_complex	center;
 
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	center = parse_complex(**argv);
 	if (center.re == center.re)
 		return (center);
 	else
-		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
+		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 }
 
 double	parse_zoom_param(int *argc, char ***argv)
@@ -671,14 +578,14 @@ double	parse_zoom_param(int *argc, char ***argv)
 	double	zoom;
 
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	zoom = ft_atof(**argv);
 	if (zoom == zoom)
 		return (zoom);
 	else
-		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
+		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 }
 
 void	apply_viewport(t_complex center, double zoom, t_fractal *fractal)
@@ -703,7 +610,7 @@ void	parse_winsize_param(int *argc, char ***argv, t_fractal *fractal)
 	int	i;
 
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->img_width = ft_atoi(**argv);
@@ -712,7 +619,7 @@ void	parse_winsize_param(int *argc, char ***argv, t_fractal *fractal)
 	while ((**argv)[++i] && ft_tolower((**argv)[i]) != 'x')
 		;
 	if (!(**argv)[i])
-		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
+		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 	else
 	{
 		fractal->img_height = ft_atoi(**argv + i + 1);
@@ -726,7 +633,7 @@ void	parse_winsize_param(int *argc, char ***argv, t_fractal *fractal)
 void	parse_grad_phase_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->gradient_phase = ft_atoi(**argv);
@@ -735,7 +642,7 @@ void	parse_grad_phase_param(int *argc, char ***argv, t_fractal *fractal)
 void	parse_iterations_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->max_iters = ft_atoi(**argv);
@@ -744,7 +651,7 @@ void	parse_iterations_param(int *argc, char ***argv, t_fractal *fractal)
 void	parse_modulus_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->modulus = ft_atoi(**argv);
@@ -753,29 +660,29 @@ void	parse_modulus_param(int *argc, char ***argv, t_fractal *fractal)
 void	parse_zoom_factor_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->zoom_factor = ft_atof(**argv);
 	if (fractal->zoom_factor != fractal->zoom_factor)
-		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
+		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 }
 
 void	parse_mvmt_speed_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->speed = ft_atof(**argv);
 	if (fractal->speed != fractal->speed)
-		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
+		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 }
 
 void	parse_title_param(int *argc, char ***argv, t_fractal *fractal)
 {
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	fractal->title = **argv;
@@ -786,33 +693,33 @@ void	parse_real_intv_param(int *argc, char ***argv, t_fractal *fractal)
 	t_complex	dummy;
 
 	if (*argc < 2)
-		(printf("'%s' expects one parameter\n", **argv), exit(2));
+		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
 	dummy = parse_complex(**argv);
 	fractal->min_re = dummy.re;
 	fractal->max_re = dummy.im;
 	if (fractal->min_re != fractal->min_re)
-		(printf("Error parsing argument for '%s': NaN\n", **argv), exit(3));
+		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 }
 
 void	parse_more_options(int *argc, char ***argv, t_fractal *fractal)
 {
-	if (!ft_strncmp(**argv, "--winsize", 10))
+	if (!ft_strcmp(**argv, "--winsize"))
 		parse_winsize_param(argc, argv, fractal);
-	else if (!ft_strncmp(**argv, "--gradient-phase", 17))
+	else if (!ft_strcmp(**argv, "--gradient-phase"))
 		parse_grad_phase_param(argc, argv, fractal);
-	else if (!ft_strncmp(**argv, "--iterations", 13))
+	else if (!ft_strcmp(**argv, "--iterations"))
 		parse_iterations_param(argc, argv, fractal);
-	else if (!ft_strncmp(**argv, "--modulus", 10))
+	else if (!ft_strcmp(**argv, "--modulus"))
 		parse_modulus_param(argc, argv, fractal);
-	else if (!ft_strncmp(**argv, "--title", 8))
+	else if (!ft_strcmp(**argv, "--title"))
 		parse_title_param(argc, argv, fractal);
-	else if (!ft_strncmp(**argv, "--real-intv", 12))
+	else if (!ft_strcmp(**argv, "--real-intv"))
 		parse_real_intv_param(argc, argv, fractal);
-	else if (!ft_strncmp(**argv, "--zoom-factor", 14))
+	else if (!ft_strcmp(**argv, "--zoom-factor"))
 		parse_zoom_factor_param(argc, argv, fractal);
-	else if (!ft_strncmp(**argv, "--mvmt-speed", 13))
+	else if (!ft_strcmp(**argv, "--mvmt-speed"))
 		parse_mvmt_speed_param(argc, argv, fractal);
 }
 
@@ -822,24 +729,23 @@ t_fractal	parse_options(int argc, char **argv)
 	t_complex	center;
 	double		zoom;
 
-	/* fractal.fractal_type = MANDELBROT; */
 	init_fractal(&fractal);
-	zoom = 1;
+	zoom = 1.;
 	center.re = (fractal.scale_re.new_max + fractal.scale_re.new_min) / 2.;
 	center.im = (fractal.scale_im.new_max + fractal.scale_im.new_min) / 2.;
 	while (--argc)
 	{
-		if (!ft_strncmp(*(++argv), "--mandelbrot", 13))
+		if (!ft_strcmp(*(++argv), "--mandelbrot"))
 			fractal.fractal_type = MANDELBROT;
-		else if (!ft_strncmp(*(argv), "--tricorn", 10))
+		else if (!ft_strcmp(*(argv), "--tricorn"))
 			fractal.fractal_type = TRICORN;
-		else if (!ft_strncmp(*(argv), "--julia", 8))
+		else if (!ft_strcmp(*(argv), "--julia"))
 			parse_julia_param(&argc, &argv, &fractal);
-		else if (!ft_strncmp(*(argv), "--multibrot", 12))
+		else if (!ft_strcmp(*(argv), "--multibrot"))
 			parse_multibrot_param(&argc, &argv, &fractal);
-		else if (!ft_strncmp(*(argv), "--center", 9))
+		else if (!ft_strcmp(*(argv), "--center"))
 			center = parse_center_param(&argc, &argv);
-		else if (!ft_strncmp(*(argv), "--zoom", 7))
+		else if (!ft_strcmp(*(argv), "--zoom"))
 			zoom = parse_zoom_param(&argc, &argv);
 		else
 			parse_more_options(&argc, &argv, &fractal);
@@ -850,9 +756,12 @@ t_fractal	parse_options(int argc, char **argv)
 
 int	close_mlx(t_vars *vars)
 {
+	mlx_destroy_image(vars->mlx, vars->img.img);
+	mlx_destroy_image(vars->mlx, vars->img2.img);
 	mlx_destroy_window(vars->mlx, vars->win);
-	/* mlx_destroy_display(vars->mlx); */
-	exit(0);
+	mlx_destroy_display(vars->mlx);
+	free(vars->mlx);
+	exit(EXIT_SUCCESS);
 }
 
 int	zoom_middle(int kc, t_vars *vars)
@@ -863,9 +772,9 @@ int	zoom_middle(int kc, t_vars *vars)
 	double	zoom_im;
 	double	zoom;
 
-	if (kc == 'z' || kc == ' ')
+	if ('z' == kc || ' ' == kc)
 		zoom = vars->fractal.zoom_factor;
-	else if (kc == 'x')
+	else if ('x' == kc)
 		zoom = 1 / vars->fractal.zoom_factor;
 	else
 		return (1);
@@ -873,10 +782,14 @@ int	zoom_middle(int kc, t_vars *vars)
 	diff_im = vars->fractal.scale_im.new_max - vars->fractal.scale_im.new_min;
 	zoom_re = vars->fractal.scale_re.new_min + diff_re / 2.;
 	zoom_im = vars->fractal.scale_im.new_min + diff_im / 2.;
-	vars->fractal.scale_re.new_min = zoom_re - (vars->fractal.img_width / 2. / (double)vars->fractal.img_width) * diff_re / zoom;
-	vars->fractal.scale_re.new_max = zoom_re + (1. - vars->fractal.img_width / 2. / (double)vars->fractal.img_width) * diff_re / zoom;
-	vars->fractal.scale_im.new_min = zoom_im - (vars->fractal.img_height / 2. / (double)vars->fractal.img_height) * diff_im / zoom;
-	vars->fractal.scale_im.new_max = zoom_im + (1. - vars->fractal.img_height / 2. / (double)vars->fractal.img_height) * diff_im / zoom;
+	vars->fractal.scale_re.new_min = zoom_re - (vars->fractal.img_width
+			/ 2. / (double)vars->fractal.img_width) * diff_re / zoom;
+	vars->fractal.scale_re.new_max = zoom_re + (1. - vars->fractal.img_width
+			/ 2. / (double)vars->fractal.img_width) * diff_re / zoom;
+	vars->fractal.scale_im.new_min = zoom_im - (vars->fractal.img_height
+			/ 2. / (double)vars->fractal.img_height) * diff_im / zoom;
+	vars->fractal.scale_im.new_max = zoom_im + (1. - vars->fractal.img_height
+			/ 2. / (double)vars->fractal.img_height) * diff_im / zoom;
 	return (0);
 }
 
@@ -888,9 +801,9 @@ int	zoom_to_mouse(int button, int x, int y, t_vars *vars)
 	double	zoom_im;
 	double	zoom;
 
-	if (button == 4)
+	if (4 == button)
 		zoom = vars->fractal.zoom_factor;
-	else if (button == 5)
+	else if (5 == button)
 		zoom = 1 / vars->fractal.zoom_factor;
 	else
 		return (1);
@@ -898,10 +811,14 @@ int	zoom_to_mouse(int button, int x, int y, t_vars *vars)
 	diff_im = vars->fractal.scale_im.new_max - vars->fractal.scale_im.new_min;
 	zoom_re = rescale(x, vars->fractal.scale_re);
 	zoom_im = rescale(y, vars->fractal.scale_im);
-	vars->fractal.scale_re.new_min = zoom_re - (x / (double)vars->fractal.img_width) * diff_re / zoom;
-	vars->fractal.scale_re.new_max = zoom_re + (1. - x / (double)vars->fractal.img_width) * diff_re / zoom;
-	vars->fractal.scale_im.new_min = zoom_im - (y / (double)vars->fractal.img_height) * diff_im / zoom;
-	vars->fractal.scale_im.new_max = zoom_im + (1. - y / (double)vars->fractal.img_height) * diff_im / zoom;
+	vars->fractal.scale_re.new_min = zoom_re - (x
+			/ (double)vars->fractal.img_width) * diff_re / zoom;
+	vars->fractal.scale_re.new_max = zoom_re + (1. - x
+			/ (double)vars->fractal.img_width) * diff_re / zoom;
+	vars->fractal.scale_im.new_min = zoom_im - (y
+			/ (double)vars->fractal.img_height) * diff_im / zoom;
+	vars->fractal.scale_im.new_max = zoom_im + (1. - y
+			/ (double)vars->fractal.img_height) * diff_im / zoom;
 	return (0);
 }
 
@@ -914,20 +831,33 @@ int	translate(int kc, int x, int y, t_vars *vars)
 
 	zoom = (vars->fractal.max_re - vars->fractal.min_re)
 		/ (vars->fractal.scale_re.new_max - vars->fractal.scale_re.new_min);
-	if (kc == -1)
+	if (-1 == kc)
 	{
-		x_diff = (double)(vars->dragging.x - x) * (vars->fractal.scale_re.new_max - vars->fractal.scale_re.new_min) / (double)vars->fractal.img_width;
-		y_diff = (double)(vars->dragging.y - y) * (vars->fractal.scale_im.new_max - vars->fractal.scale_im.new_min) / (double)vars->fractal.img_height;
-		vars->fractal.scale_re.new_min = vars->dragging.scale_re.new_min + x_diff;
-		vars->fractal.scale_re.new_max = vars->dragging.scale_re.new_max + x_diff;
-		vars->fractal.scale_im.new_min = vars->dragging.scale_im.new_min + y_diff;
-		vars->fractal.scale_im.new_max = vars->dragging.scale_im.new_max + y_diff;
+		if (-1 == vars->dragging.x)
+		{
+			vars->dragging.x = x;
+			vars->dragging.y = y;
+		}
+		x_diff = (double)(vars->dragging.x - x)
+			* (vars->fractal.scale_re.new_max - vars->fractal.scale_re.new_min)
+			/ (double)vars->fractal.img_width;
+		y_diff = (double)(vars->dragging.y - y)
+			* (vars->fractal.scale_im.new_max - vars->fractal.scale_im.new_min)
+			/ (double)vars->fractal.img_height;
+		vars->fractal.scale_re.new_min = vars->dragging.scale_re.new_min
+			+ x_diff;
+		vars->fractal.scale_re.new_max = vars->dragging.scale_re.new_max
+			+ x_diff;
+		vars->fractal.scale_im.new_min = vars->dragging.scale_im.new_min
+			+ y_diff;
+		vars->fractal.scale_im.new_max = vars->dragging.scale_im.new_max
+			+ y_diff;
 		return (0);
 	}
-	if (kc == 'h' || kc == 'k' || kc == KC_LEFT || kc == KC_UP)
+	if ('h' == kc || 'k' == kc || KC_LEFT == kc || KC_UP == kc)
 		zoom *= -1;
 	re = 1;
-	if (kc == 'j' || kc == 'k' || kc == KC_UP || kc == KC_DOWN)
+	if ('j' == kc || 'k' == kc || KC_UP == kc || KC_DOWN == kc)
 		re = 0;
 	vars->fractal.scale_re.new_min += vars->fractal.speed / zoom * re;
 	vars->fractal.scale_re.new_max += vars->fractal.speed / zoom * re;
@@ -951,45 +881,37 @@ int	reset_viewport(int kc, t_vars *vars)
 	return (0);
 }
 
-int	change_fractal(int kc, t_vars *vars)
+void	change_fractal(int kc, t_vars *vars)
 {
-	if (kc == '1')
-		return (vars->fractal.fractal_type = MANDELBROT, 0);
-	else if (kc == '2')
-	{
-		vars->fractal.julia_c.re = -0.7;
-		vars->fractal.julia_c.im = 0.27015;
-		return (vars->fractal.fractal_type = JULIA, 0);
-	}
-	else if (kc == '3')
-	{
-		vars->fractal.multibrot_exponent = 3.1415926535897932384626;
-		return (vars->fractal.fractal_type = MULTIBROT, 0);
-	}
-	else if (kc == '4')
-		return (vars->fractal.fractal_type = TRICORN, 0);
-	return (1);
+	if ('1' == kc)
+		vars->fractal.fractal_type = MANDELBROT;
+	else if ('2' == kc)
+		vars->fractal.fractal_type = JULIA;
+	else if ('3' == kc)
+		vars->fractal.fractal_type = MULTIBROT;
+	else if ('4' == kc)
+		vars->fractal.fractal_type = TRICORN;
 }
 
 void	change_gradient_phase(int kc, t_vars *vars)
 {
-	if (kc == ',')
-		vars->fractal.gradient_phase -= 100;
-	else if (kc == '.')
-		vars->fractal.gradient_phase += 100;
-	if (vars->fractal.gradient_phase % 10 == 0)
+	if (',' == kc)
+		vars->fractal.gradient_phase -= GRADIENT_PHASE_INC;
+	else if ('.' == kc)
+		vars->fractal.gradient_phase += GRADIENT_PHASE_INC;
+	if (0 == vars->fractal.gradient_phase % 10)
 		++vars->fractal.gradient_phase;
 }
 
 void	change_iterations(int kc, t_vars *vars)
 {
-	if (kc == '-')
-		vars->fractal.max_iters -= 1;
-	else if (kc == '=')
-		vars->fractal.max_iters += 1;
+	if ('-' == kc)
+		vars->fractal.max_iters -= ITERS_INC;
+	else if ('=' == kc)
+		vars->fractal.max_iters += ITERS_INC;
 	if (vars->fractal.max_iters < 1)
-		vars->fractal.max_iters = 1;
-	printf("Max iterations: %d\n", vars->fractal.max_iters);
+		vars->fractal.max_iters = MIN_ITERS;
+	dprintf(1, "Max iterations: %d\n", vars->fractal.max_iters);
 }
 
 int	keydown_hook(int kc, t_vars *vars)
@@ -997,24 +919,25 @@ int	keydown_hook(int kc, t_vars *vars)
 	int	ret;
 
 	ret = 1;
-	if (kc == 'z' || kc == ' ' || kc == 'x')
+	if ('z' == kc || ' ' == kc || 'x' == kc)
 		ret = zoom_middle(kc, vars);
-	else if (kc == '0')
+	else if ('0' == kc)
 		ret = reset_viewport(kc, vars);
-	else if (kc == KC_ESC || kc == 'q')
+	else if (XK_Escape == kc || 'q' == kc)
 		ret = close_mlx(vars);
-	else if (kc == 'h' || kc == 'j' || kc == 'k'
-		|| kc == 'l' || (kc >= KC_LEFT && kc <= KC_DOWN))
+	else if ('h' == kc || 'j' == kc || 'k' == kc
+		|| 'l' == kc || (XK_Left == kc || XK_Up == kc
+			|| XK_Right == kc || XK_Down == kc))
 		ret = translate(kc, -1, -1, vars);
-	else if (kc == 'r')
-		return (render(vars, 0), ret);
-	else if (kc >= '1' && kc <= '9')
-		ret = change_fractal(kc, vars);
-	else if (kc == ',' || kc == '.')
-		return (change_gradient_phase(kc, vars), render(vars, 0), 0);
-	else if (kc == '-' || kc == '=')
+	else if ('r' == kc)
+		return (render(vars, NO_CACHE), ret);
+	else if ('1' <= kc && '9' >= kc)
+		return (change_fractal(kc, vars), render(vars, NO_CACHE), 0);
+	else if (',' == kc || '.' == kc)
+		return (change_gradient_phase(kc, vars), render(vars, NO_CACHE), 0);
+	else if ('-' == kc || '=' == kc)
 		change_iterations(kc, vars);
-	return (render(vars, 1), ret);
+	return (render(vars, USE_CACHE), ret);
 }
 
 int	mouse_down_hook(int button, int x, int y, t_vars *vars)
@@ -1022,38 +945,42 @@ int	mouse_down_hook(int button, int x, int y, t_vars *vars)
 	int	ret;
 
 	ret = 1;
-	if (button == 4 || button == 5)
+	if (Button4 == button || Button5 == button)
 		ret = zoom_to_mouse(button, x, y, vars);
-	else if (button == 1)
+	else if (Button1 == button)
 	{
 		vars->dragging.x = x;
 		vars->dragging.y = y;
 		vars->dragging.scale_re = vars->fractal.scale_re;
 		vars->dragging.scale_im = vars->fractal.scale_im;
-		return (render(vars, 0), 0);
+		vars->mouse_down = True;
+		return (render(vars, NO_CACHE), 0);
 	}
-	return (render(vars, 1), ret);
+	return (render(vars, USE_CACHE), ret);
+}
+
+int	mouse_up_hook(int button, int x, int y, t_vars *vars)
+{
+	(void)x;
+	(void)y;
+	if (Button1 == button)
+	{
+		vars->mouse_down = False;
+		return (0);
+	}
+	return (1);
 }
 
 int	mouse_move_hook(int x, int y, t_vars *vars)
 {
+	if (vars->render_mutex || !vars->mouse_down)
+		return (1);
 	translate(-1, x, y, vars);
-	return (render(vars, 1), 0);
+	return (render(vars, USE_CACHE), 0);
 }
 
-void	setup_hooks(t_vars *vars)
+void	init_images(t_vars *vars)
 {
-	mlx_hook(vars->win, 2, 1L << 0, keydown_hook, vars);
-	mlx_hook(vars->win, 4, 1L << 2, mouse_down_hook, vars);
-	mlx_hook(vars->win, 6, 1L << 8, mouse_move_hook, vars);
-	mlx_hook(vars->win, 17, 0L, close_mlx, vars);
-}
-
-void	init(t_vars *vars)
-{
-	vars->mlx = mlx_init();
-	vars->win = mlx_new_window(vars->mlx, vars->fractal.img_width,
-			vars->fractal.img_height, vars->fractal.title);
 	vars->img.img = mlx_new_image(vars->mlx, vars->fractal.img_width,
 			vars->fractal.img_height);
 	vars->img.addr = mlx_get_data_addr(vars->img.img, &vars->img.bpp,
@@ -1064,18 +991,63 @@ void	init(t_vars *vars)
 			&vars->img2.line_length, &vars->img2.endian);
 }
 
+int	resize_img(t_vars *vars)
+{
+	int		width;
+	int		height;
+	Status	status;
+
+	status = mlx_get_window_dim(vars->mlx, vars->win, &width, &height);
+	if ((vars->fractal.img_width == width && vars->fractal.img_height == height)
+		|| !status)
+		return (1);
+	vars->fractal.img_width = width;
+	vars->fractal.img_height = height;
+	vars->fractal.scale_re.old_max = width;
+	vars->fractal.scale_im.old_max = height;
+	mlx_destroy_image(vars->mlx, vars->img.img);
+	mlx_destroy_image(vars->mlx, vars->img2.img);
+	init_images(vars);
+	setup_hooks(vars);
+	return (render(vars, NO_CACHE), 0);
+}
+
+void	setup_hooks(t_vars *vars)
+{
+	mlx_hook(vars->win, KeyPress, KeyPressMask, keydown_hook, vars);
+	mlx_hook(vars->win, KeyRelease, ButtonPressMask, mouse_down_hook, vars);
+	mlx_hook(vars->win, ButtonRelease, ButtonReleaseMask, mouse_up_hook, vars);
+	mlx_hook(vars->win, MotionNotify, PointerMotionMask, mouse_move_hook, vars);
+	mlx_hook(vars->win, DestroyNotify, NoEventMask, close_mlx, vars);
+	mlx_hook(vars->win, ConfigureNotify, StructureNotifyMask, resize_img, vars);
+}
+
+void	init(t_vars *vars)
+{
+	vars->mlx = mlx_init();
+	if (!vars->mlx)
+		(perror("mlx_init"), exit(EXIT_MLX_INIT));
+	vars->win = mlx_new_resizable_window(vars->mlx, vars->fractal.img_width,
+			vars->fractal.img_height, vars->fractal.title);
+	init_images(vars);
+	vars->dragging.x = -1;
+	vars->dragging.y = -1;
+	vars->dragging.scale_re = vars->fractal.scale_re;
+	vars->dragging.scale_im = vars->fractal.scale_im;
+	vars->render_mutex = False;
+	vars->mouse_down = False;
+}
+
 int	main(int argc, char **argv)
 {
 	t_vars	vars;
 
 	if (parse_help(argc, argv))
-		return (1);
+		return (EXIT_HELP);
 	vars.fractal = parse_options(argc, argv);
-	vars.fractal.gradient_phase = 100;
-	vars.fractal.max_iters = 100;
 	init(&vars);
-	render(&vars, 0);
+	render(&vars, NO_CACHE);
 	setup_hooks(&vars);
 	mlx_loop(vars.mlx);
-	return (0);
+	return (EXIT_SUCCESS);
 }
