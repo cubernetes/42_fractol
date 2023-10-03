@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 00:59:19 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 04:34:06 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/03 05:02:04 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,8 +44,7 @@
 
 # define MANDELBROT 0
 # define JULIA      1
-# define MULTIBROT  2
-# define TRICORN    3
+# define TRICORN    2
 
 # define OPTIONS_WIDTH 27
 # define DESC_WIDTH    40
@@ -59,6 +58,9 @@
 # define EXIT_MISSING_PARAM 2
 # define EXIT_PARAM_NAN     3
 # define EXIT_MLX_INIT      4
+
+# define DEF_JULIA_RE      -0.7
+# define DEF_JULIA_IM       0.27015
 
 typedef struct s_fimg
 {
@@ -86,7 +88,6 @@ typedef struct s_scale
 typedef struct s_fractal
 {
 	int			fractal_type;
-	double		multibrot_exponent;
 	t_complex	julia_c;
 	t_scale		scale_re;
 	t_scale		scale_im;

@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/28 14:17:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 04:33:49 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/03 05:01:45 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,22 +174,6 @@ int	color_from_iter(t_complex z, int iter, t_fractal *fractal)
 	return (colors[color_idx]);
 }
 
-/* very slow */
-t_complex	complex_power(t_complex z, double exp)
-{
-	double complex	z_;
-	double complex	exp_;
-	double complex	power_;
-	t_complex		power;
-
-	z_ = z.re + z.im * _Complex_I;
-	exp_ = exp;
-	power_ = cpow(z_, exp_);
-	power.re = creal(power_);
-	power.im = cimag(power_);
-	return (power);
-}
-
 int	render_mandelbrot(t_complex c, t_fractal *fractal)
 {
 	t_complex	z;
@@ -226,23 +210,6 @@ int	render_tricorn(t_complex c, t_fractal *fractal)
 		if (complex_modulus(z) > fractal->modulus)
 			break ;
 		z = complex_addition(complex_product(conjugate(z), conjugate(z)), c);
-	}
-	return (color_from_iter(z, iter, fractal));
-}
-
-int	render_multibrot(t_complex c, t_fractal *fractal)
-{
-	t_complex	z;
-	int			iter;
-
-	z.re = 0.0;
-	z.im = 0.0;
-	iter = -1;
-	while (++iter < fractal->max_iters)
-	{
-		if (complex_modulus(z) > fractal->modulus)
-			break ;
-		z = complex_addition(complex_power(z, fractal->multibrot_exponent), c);
 	}
 	return (color_from_iter(z, iter, fractal));
 }
@@ -289,8 +256,6 @@ int	compute_fractal_clr(t_complex c, t_fractal *fractal)
 		return (render_mandelbrot(c, fractal));
 	else if (JULIA == fractal->fractal_type)
 		return (render_julia(c, fractal));
-	else if (MULTIBROT == fractal->fractal_type)
-		return (render_multibrot(c, fractal));
 	else if (TRICORN == fractal->fractal_type)
 		return (render_tricorn(c, fractal));
 	return (0);
@@ -437,9 +402,6 @@ void	print_help(char **argv)
 	print_option("--julia", "RE,IM",
 		"Render the julia set for c = RE+IM*i. RE and IM are decimals"
 		" with a dot for the thousands separator.");
-	print_option("--multibrot", "D", "Render a multibrot (z^D + c). Beware that"
-		" this is very slow due to using the cexp() function, which can"
-		" also take decimal exponents.");
 	print_option("--center", "RE,IM", "Make RE+IM*i the center of the window.");
 	print_option("--zoom", "FACTOR", "Zoom the viewport by FACTOR.");
 	print_option("--zoom-factor", "FACTOR", "The factor by which the factor "
@@ -527,9 +489,8 @@ void	init_fractal(t_fractal *fractal)
 	fractal->modulus = DEF_MODULUS;
 	fractal->zoom_factor = DEF_ZOOM_FACTOR;
 	fractal->speed = DEF_SPEED;
-	fractal->julia_c.re = -0.7;
-	fractal->julia_c.im = 0.27015;
-	fractal->multibrot_exponent = 3.1415926535897932384626;
+	fractal->julia_c.re = DEF_JULIA_RE;
+	fractal->julia_c.im = DEF_JULIA_IM;
 }
 
 void	parse_julia_param(int *argc, char ***argv, t_fractal *fractal)
@@ -541,19 +502,6 @@ void	parse_julia_param(int *argc, char ***argv, t_fractal *fractal)
 	fractal->julia_c = parse_complex(**argv);
 	if (fractal->julia_c.re == fractal->julia_c.re)
 		fractal->fractal_type = JULIA;
-	else
-		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
-}
-
-void	parse_multibrot_param(int *argc, char ***argv, t_fractal *fractal)
-{
-	if (*argc < 2)
-		(dprintf(2, "'%s' expects one parameter\n", **argv), exit(EXIT_MISSING_PARAM));
-	++(*argv);
-	--(*argc);
-	fractal->multibrot_exponent = ft_atof(**argv);
-	if (fractal->multibrot_exponent == fractal->multibrot_exponent)
-		fractal->fractal_type = MULTIBROT;
 	else
 		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv), exit(EXIT_PARAM_NAN));
 }
@@ -741,8 +689,6 @@ t_fractal	parse_options(int argc, char **argv)
 			fractal.fractal_type = TRICORN;
 		else if (!ft_strcmp(*(argv), "--julia"))
 			parse_julia_param(&argc, &argv, &fractal);
-		else if (!ft_strcmp(*(argv), "--multibrot"))
-			parse_multibrot_param(&argc, &argv, &fractal);
 		else if (!ft_strcmp(*(argv), "--center"))
 			center = parse_center_param(&argc, &argv);
 		else if (!ft_strcmp(*(argv), "--zoom"))
@@ -801,9 +747,9 @@ int	zoom_to_mouse(int button, int x, int y, t_vars *vars)
 	double	zoom_im;
 	double	zoom;
 
-	if (4 == button)
+	if (Button4 == button)
 		zoom = vars->fractal.zoom_factor;
-	else if (5 == button)
+	else if (Button5 == button)
 		zoom = 1 / vars->fractal.zoom_factor;
 	else
 		return (1);
@@ -888,8 +834,6 @@ void	change_fractal(int kc, t_vars *vars)
 	else if ('2' == kc)
 		vars->fractal.fractal_type = JULIA;
 	else if ('3' == kc)
-		vars->fractal.fractal_type = MULTIBROT;
-	else if ('4' == kc)
 		vars->fractal.fractal_type = TRICORN;
 }
 
