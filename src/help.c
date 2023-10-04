@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 07:55:21 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 09:22:51 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/04 19:20:03 by tosuman          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,9 @@ void	print_runtime_bindings(void)
 	dprintf(1, "\033[97mRUNTIME KEYBINDINGS:\033[m\n");
 	print_option("", "hjkl or arrows", "Navigate the mandelbrot set");
 	print_option("", "left click + drag", "Navigate the mandelbrot set");
-	print_option("", "z/x/r", "Zoom in/Zoom out/Reset viewport");
+	print_option("", "r/left click", "Rerender");
+	print_option("", "z/x/0", "Zoom in/Zoom out/Reset viewport");
+	print_option("", "1/2/3", "Change fractal to mandelbrot/julia/tricorn");
 	print_option("", "scroll up/down", "Zoom in/Zoom out");
 	print_option("", "./,", "Increase/Decrease the gradient phase");
 	print_option("", "+/-", "Increase/Decrease the number of iterations");

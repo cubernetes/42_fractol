@@ -6,7 +6,7 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/28 14:29:52 by tosuman           #+#    #+#              #
-#    Updated: 2023/10/03 10:12:41 by tosuman          ###   ########.fr        #
+#    Updated: 2023/10/04 19:36:55 by tosuman          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,21 +24,23 @@ _SRC         = viewport.c change_params.c fractol.c render.c color_utils.c \
 			   param_parsing1.c param_parsing2.c param_parsing3.c \
 			   zoom_and_translation.c
 _OBJ         = $(_SRC:.c=.o)
-HEADERS		 = fractol.h
+_HEADERS	 = fractol.h definitions.h math_utils.h parsing.h \
+			   typedefs.h viewport.h window.h
 LIBFT_DIR    = ./libft
 MINILIBX_DIR = ./minilibx-linux
 
 SRCDIR       = src
 OBJDIR       = obj
-INCLUDE      = include
+INCLUDEDIR   = include
 SRC          = $(addprefix $(SRCDIR)/,$(_SRC))
 OBJ          = $(addprefix $(OBJDIR)/,$(_OBJ))
+INCLUDE      = $(addprefix $(INCLUDEDIR)/,$(_HEADERS))
 
 CC           = cc
 # TODO: Add -std=c89
 CFLAGS       = -O3 -Wall -Wextra -Werror \
 		       -pedantic -Wconversion
-CPPFLAGS     = -I$(LIBFT_DIR) -I$(MINILIBX_DIR) -I$(INCLUDE)
+CPPFLAGS     = -I$(LIBFT_DIR) -I$(MINILIBX_DIR) -I$(INCLUDEDIR)
 LDFLAGS      = -L$(LIBFT_DIR) -L$(MINILIBX_DIR) \
 		       -l$(LIBFT_) -l$(MINILIBX_) -lXext -lX11 -lm
 
@@ -57,7 +59,7 @@ $(MINILIBX_DIR)/$(MINILIBX):
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
-$(OBJ): $(INCLUDE)/$(HEADERS) | $(OBJDIR)
+$(OBJ): $(INCLUDE) | $(OBJDIR)
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
