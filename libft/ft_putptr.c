@@ -6,7 +6,7 @@
 /*   By: tischmid <timo42@proton.me>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/05 16:51:47 by tischmid          #+#    #+#             */
-/*   Updated: 2023/10/05 16:51:57 by tischmid         ###   ########.fr       */
+/*   Updated: 2023/10/05 23:10:27 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,5 +18,5 @@ int	ft_putptr(void *ptr)
 		return (ft_putstr(NIL_PTR_STR));
 	return (ft_putchar('0') + \
 			ft_putchar('x') + \
-			ft_puthex((unsigned long long)ptr, 0));
+			ft_puthex((unsigned long)ptr, 0));
 }

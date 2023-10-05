@@ -6,14 +6,17 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/11 11:55:27 by tosuman           #+#    #+#             */
-/*   Updated: 2023/05/11 11:55:28 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 23:03:26 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stddef.h>
 
-void	ft_bzero(void *s, size_t n)
+void	ft_bzero(void *ptr, size_t n)
 {
+	char	*p;
+
+	p = (char *)ptr;
 	while (n--)
-		*(char *) s++ = (unsigned char) 0;
+		*p++ = (unsigned char) 0;
 }

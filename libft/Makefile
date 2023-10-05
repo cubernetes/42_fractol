@@ -6,13 +6,14 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/12 10:04:04 by tosuman           #+#    #+#              #
-#    Updated: 2023/10/05 21:41:20 by tischmid         ###   ########.fr        #
+#    Updated: 2023/10/05 23:40:12 by tischmid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 CC = cc
-CFLAGS = -Wall -Wextra -Werror
-LDFLAGS =
+unexport CFLAGS
+unexport LDFLAGS
+CFLAGS += -O3 -Wall -Wextra -Werror -pedantic -std=c89 -Wconversion
 AR = ar rcs
 RM = /bin/rm -f
 

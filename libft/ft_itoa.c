@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/03 11:32:41 by tosuman           #+#    #+#             */
-/*   Updated: 2023/06/03 11:32:41 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 23:05:03 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,10 +26,10 @@ char	*ft_itoa(int n)
 	while (n_cpy * ++n_len != 0)
 		n_cpy /= 10;
 	--n_len;
-	str = malloc(sizeof(*str) * (n_len + is_neg + 1));
+	str = malloc(sizeof(*str) * (n_len + (size_t)is_neg + 1));
 	if (!str)
 		return (0);
-	str += n_len + is_neg;
+	str += (int)n_len + is_neg;
 	n_cpy = ft_abs(n);
 	*str-- = 0;
 	while (n_len--)

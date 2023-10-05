@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/11 10:06:42 by tosuman           #+#    #+#             */
-/*   Updated: 2023/05/11 10:06:42 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 23:03:51 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@ void	*ft_memset(void *s, int c, unsigned long n)
 {
 	unsigned char	*ptr;
 
-	ptr = (unsigned char *) s;
+	ptr = (unsigned char *)s;
 	while (n-- > 0)
-		*ptr++ = c;
+		*ptr++ = (unsigned char)c;
 	return (s);
 }

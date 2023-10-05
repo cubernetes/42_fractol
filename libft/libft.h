@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/11 11:31:44 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/05 17:08:58 by tischmid         ###   ########.fr       */
+/*   Updated: 2023/10/05 23:01:20 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,8 +78,8 @@ int					ft_putendl_fd(char *s, int fd);
 int					ft_putnbr_fd(int nb, int fd);
 int					ft_putchar_fd(char c, int fd);
 int					ft_putstr_fd(char *s, int fd);
-int					ft_puthex_fd(unsigned long long nbr, int uppercase, int fd);
-int					ft_puthex(unsigned long long nbr, int uppercase);
+int					ft_puthex_fd(unsigned long nbr, int uppercase, int fd);
+int					ft_puthex(unsigned long nbr, int uppercase);
 int					ft_putnbr(int nb);
 int					ft_putchar(char c);
 int					ft_putstr(char *s);

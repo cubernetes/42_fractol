@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/24 16:29:20 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/05 16:52:57 by tischmid         ###   ########.fr       */
+/*   Updated: 2023/10/05 23:11:30 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,9 +20,9 @@ void	ft_lstadd_back(t_list **lst, t_list *new_tail)
 		return ;
 	if (!*lst)
 	{
-		*lst = new;
+		*lst = new_tail;
 		return ;
 	}
 	last = ft_lstlast(*lst);
-	last->next = new;
+	last->next = new_tail;
 }

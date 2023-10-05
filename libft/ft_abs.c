@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/03 11:52:45 by tosuman           #+#    #+#             */
-/*   Updated: 2023/06/03 11:52:45 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 23:10:39 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 unsigned int	ft_abs(int n)
 {
 	if (n > 0)
-		return (n);
+		return ((unsigned int)n);
 	else
 		return (-(unsigned int) n);
 }

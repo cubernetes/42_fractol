@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/24 13:23:00 by tosuman           #+#    #+#             */
-/*   Updated: 2023/06/02 20:01:07 by tischmid         ###   ########.fr       */
+/*   Updated: 2023/10/05 23:05:13 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 	char			*substr;
 	char			*empty;
 
-	idx = -1;
+	idx = (unsigned int)-1;
 	while (s[++idx] && idx < start)
 		;
 	if (!s[idx])

@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 07:51:23 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 10:08:02 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 23:17:09 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ void	update_img_buffer(t_vars *vars, int x, int y, t_render_state *rs)
 
 void	render(t_vars *vars, int use_cache)
 {
-	static t_render_state	render_state = {.parity = -1};
+	static t_render_state	render_state = {-1, {0, 0, 0, 0,}, {0, 0, 0, 0}};
 	int						x;
 	int						y;
 

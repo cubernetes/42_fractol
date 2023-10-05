@@ -6,13 +6,13 @@
 /*   By: tischmid <timo42@proton.me>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/05 16:50:49 by tischmid          #+#    #+#             */
-/*   Updated: 2023/10/05 16:52:09 by tischmid         ###   ########.fr       */
+/*   Updated: 2023/10/05 23:10:18 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-int	ft_puthex(unsigned long long nbr, int uppercase)
+int	ft_puthex(unsigned long nbr, int uppercase)
 {
 	int	digit;
 	int	count;
@@ -32,6 +32,6 @@ int	ft_puthex(unsigned long long nbr, int uppercase)
 		digit = HEX_DIGITS[nbr % 16];
 	nbr /= 16;
 	count += ft_puthex(nbr, uppercase);
-	count += ft_putchar(digit);
+	count += ft_putchar((char)digit);
 	return (count);
 }

@@ -6,15 +6,15 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/09 14:47:33 by tosuman           #+#    #+#             */
-/*   Updated: 2023/06/09 14:47:34 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 23:06:45 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 void	ft_striteri(char *s, void (*f)(unsigned int, char*))
 {
-	int		idx;
+	unsigned int		idx;
 
-	idx = -1;
+	idx = (unsigned int)-1;
 	while (s[++idx])
 		(f)(idx, &s[idx]);
 }
