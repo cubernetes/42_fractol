@@ -6,11 +6,12 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 08:05:50 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 08:39:16 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 21:39:24 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <fractol.h>
+#include <libft.h>
 
 void	change_fractal(int kc, t_vars *vars)
 {
@@ -40,5 +41,5 @@ void	change_iterations(int kc, t_vars *vars)
 		vars->fractal.max_iters += ITERS_INC;
 	if (vars->fractal.max_iters < 1)
 		vars->fractal.max_iters = MIN_ITERS;
-	dprintf(1, "Max iterations: %d\n", vars->fractal.max_iters);
+	ft_dprintf(1, "Max iterations: %d\n", vars->fractal.max_iters);
 }

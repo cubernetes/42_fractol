@@ -1,23 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_putstr_fd.c                                     :+:      :+:    :+:   */
+/*   ft_putendl.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/09 14:26:11 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/05 17:00:01 by tischmid         ###   ########.fr       */
+/*   Created: 2023/06/09 14:27:38 by tosuman           #+#    #+#             */
+/*   Updated: 2023/10/05 17:00:22 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-int	ft_putstr_fd(char *s, int fd)
+int	ft_putendl(char *s)
 {
-	int	i;
-
-	i = 0;
-	while (*s && ft_putchar_fd(*s++, fd))
-		++i;
-	return (i);
+	return (ft_putstr(s) + ft_putchar('\n'));
 }

@@ -67,7 +67,7 @@ t_fractal	parse_options(int argc, char **argv)
 		else if (parse_more_options(&argc, &argv, &fractal))
 			;
 		else
-			(dprintf(2, "Unknown parameter: '\033[31m%s\033[m'\n", *argv),
+			(ft_dprintf(2, "Unknown parameter: '\033[31m%s\033[m'\n", *argv),
 				exit(EXIT_INV_PARAM));
 	}
 	apply_viewport(center, zoom, &fractal);

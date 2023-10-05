@@ -6,13 +6,14 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/09 14:24:36 by tosuman           #+#    #+#             */
-/*   Updated: 2023/06/09 14:24:37 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 16:59:20 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <unistd.h>
 
-void	ft_putchar_fd(char c, int fd)
+int	ft_putchar_fd(char c, int fd)
 {
 	write(fd, &c, 1);
+	return (1);
 }

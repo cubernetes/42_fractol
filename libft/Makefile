@@ -6,7 +6,7 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/12 10:04:04 by tosuman           #+#    #+#              #
-#    Updated: 2023/10/03 08:11:50 by tosuman          ###   ########.fr        #
+#    Updated: 2023/10/05 21:41:20 by tischmid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -52,6 +52,9 @@ _SRC += ft_putchar_fd.c
 _SRC += ft_putendl_fd.c
 _SRC += ft_putnbr_fd.c
 _SRC += ft_putstr_fd.c
+_SRC += ft_putendl.c
+_SRC += ft_putstr.c
+_SRC += ft_putchar.c
 
 _SRC += ft_itoa.c
 _SRC += ft_strtrim.c
@@ -60,6 +63,15 @@ _SRC += ft_strjoin.c
 _SRC += ft_split.c
 _SRC += ft_striteri.c
 _SRC += ft_strmapi.c
+
+_SRC += ft_putfmt.c
+_SRC += ft_putfmt_fd.c
+_SRC += ft_puthex_fd.c
+_SRC += ft_putptr_fd.c
+_SRC += ft_puthex.c
+_SRC += ft_putptr.c
+_SRC += ft_printf.c
+_SRC += ft_dprintf.c
 
 _SRC_BONUS += ft_lstnew.c
 _SRC_BONUS += ft_lstadd_front.c

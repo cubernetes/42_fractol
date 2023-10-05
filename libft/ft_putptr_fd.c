@@ -1,23 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_putstr_fd.c                                     :+:      :+:    :+:   */
+/*   ft_putptr_fd.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
+/*   By: tischmid <timo42@proton.me>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/09 14:26:11 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/05 17:00:01 by tischmid         ###   ########.fr       */
+/*   Created: 2023/10/05 16:51:47 by tischmid          #+#    #+#             */
+/*   Updated: 2023/10/05 21:44:25 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-int	ft_putstr_fd(char *s, int fd)
+int	ft_putptr_fd(void *ptr, int fd)
 {
-	int	i;
-
-	i = 0;
-	while (*s && ft_putchar_fd(*s++, fd))
-		++i;
-	return (i);
+	if (!ptr)
+		return (ft_putstr_fd(NIL_PTR_STR, fd));
+	return (ft_putchar_fd('0', fd) + \
+			ft_putchar_fd('x', fd) + \
+			ft_puthex_fd((unsigned long long)ptr, 0, fd));
 }

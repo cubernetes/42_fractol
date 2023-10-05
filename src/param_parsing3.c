@@ -27,7 +27,7 @@ int	parse_help(int argc, char **argv)
 void	check_param(int *argc, char ***argv)
 {
 	if (*argc < 2)
-		(dprintf(2, "'%s' expects one parameter\n", **argv),
+		(ft_dprintf(2, "'%s' expects one parameter\n", **argv),
 			exit(EXIT_MISSING_PARAM));
 	++(*argv);
 	--(*argc);
@@ -56,6 +56,6 @@ void	parse_julia_param(int *argc, char ***argv, t_fractal *fractal)
 	if (fractal->julia_c.re == fractal->julia_c.re)
 		fractal->fractal_type = JULIA;
 	else
-		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
+		(ft_dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
 			exit(EXIT_PARAM_NAN));
 }

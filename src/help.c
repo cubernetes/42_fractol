@@ -19,20 +19,20 @@ void	print_option(const char *option, const char *args, const char *desc)
 	int	w;
 
 	w = OPTIONS_WIDTH - (int)(ft_strwidth(option, 4) + ft_strwidth(args, 4));
-	if (option && dprintf(1, "    \033[34m%s\033[m", option))
+	if (option && ft_dprintf(1, "    \033[34m%s\033[m", option))
 		w -= 4;
-	if (args && dprintf(1, " \033[33m%s\033[m", args))
+	if (args && ft_dprintf(1, " \033[33m%s\033[m", args))
 		w -= 1;
 	while (w-- > 0)
-		dprintf(1, " ");
+		ft_dprintf(1, " ");
 	while (*desc)
 	{
 		w = -1;
 		while (*desc && ++w < DESC_WIDTH)
-			dprintf(1, "%c", *desc++);
+			ft_dprintf(1, "%c", *desc++);
 		while (*desc && !ft_isspace(*desc))
-			dprintf(1, "%c", *desc++);
-		dprintf(1, "\n");
+			ft_dprintf(1, "%c", *desc++);
+		ft_dprintf(1, "\n");
 		if (*desc && *desc++)
 			ft_putstr_mult(" ", OPTIONS_WIDTH);
 	}
@@ -40,7 +40,7 @@ void	print_option(const char *option, const char *args, const char *desc)
 
 void	print_runtime_bindings(void)
 {
-	dprintf(1, "\033[97mRUNTIME KEYBINDINGS:\033[m\n");
+	ft_dprintf(1, "\033[97mRUNTIME KEYBINDINGS:\033[m\n");
 	print_option("", "hjkl or arrows", "Navigate the mandelbrot set");
 	print_option("", "left click + drag", "Navigate the mandelbrot set");
 	print_option("", "r/left click", "Rerender");
@@ -74,7 +74,7 @@ void	print_more_help(void)
 
 void	print_help(char **argv)
 {
-	dprintf(1, "\033[97mUSAGE:\033[m\n    \033[32m%s\033[m \033[34mOPTIONS\033[m\n\n"
+	ft_dprintf(1, "\033[97mUSAGE:\033[m\n    \033[32m%s\033[m \033[34mOPTIONS\033[m\n\n"
 		"\033[97mOPTIONS:\033[m\n", argv[0]);
 	print_option("--mandelbrot", NULL,
 		"Render the canonical mandelbrot set (z^2 + c).");

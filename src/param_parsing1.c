@@ -25,7 +25,7 @@ void	parse_zoom_factor_param(int *argc, char ***argv, t_fractal *fractal)
 	check_param(argc, argv);
 	fractal->zoom_factor = ft_atof(**argv);
 	if (fractal->zoom_factor != fractal->zoom_factor)
-		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
+		(ft_dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
 			exit(EXIT_PARAM_NAN));
 }
 
@@ -34,7 +34,7 @@ void	parse_mvmt_speed_param(int *argc, char ***argv, t_fractal *fractal)
 	check_param(argc, argv);
 	fractal->speed = ft_atof(**argv);
 	if (fractal->speed != fractal->speed)
-		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
+		(ft_dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
 			exit(EXIT_PARAM_NAN));
 }
 
@@ -53,6 +53,6 @@ void	parse_real_intv_param(int *argc, char ***argv, t_fractal *fractal)
 	fractal->min_re = dummy.re;
 	fractal->max_re = dummy.im;
 	if (fractal->min_re != fractal->min_re)
-		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
+		(ft_dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
 			exit(EXIT_PARAM_NAN));
 }

@@ -23,7 +23,7 @@ t_complex	parse_center_param(int *argc, char ***argv)
 	if (center.re == center.re)
 		return (center);
 	else
-		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
+		(ft_dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
 			exit(EXIT_PARAM_NAN));
 }
 
@@ -36,7 +36,7 @@ double	parse_zoom_param(int *argc, char ***argv)
 	if (zoom == zoom)
 		return (zoom);
 	else
-		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
+		(ft_dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
 			exit(EXIT_PARAM_NAN));
 }
 
@@ -51,7 +51,7 @@ void	parse_winsize_param(int *argc, char ***argv, t_fractal *fractal)
 	while ((**argv)[++i] && ft_tolower((**argv)[i]) != 'x')
 		;
 	if (!(**argv)[i])
-		(dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
+		(ft_dprintf(2, "Error parsing argument for '%s': NaN\n", **argv),
 			exit(EXIT_PARAM_NAN));
 	else
 	{

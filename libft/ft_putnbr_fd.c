@@ -6,30 +6,34 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/09 14:29:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/06/09 14:29:26 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 21:26:35 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 #include <limits.h>
 
-void	ft_putnbr_fd(int nb, int fd)
+int	ft_putnbr_fd(int nb, int fd)
 {
+	int	count;
+
+	count = 0;
 	if (nb > 9)
 	{
-		ft_putnbr_fd(nb / 10, fd);
-		ft_putchar_fd(nb % 10 + '0', fd);
+		count += ft_putnbr_fd(nb / 10, fd);
+		count += ft_putchar_fd(nb % 10 + '0', fd);
 	}
 	else if (nb == INT_MIN)
 	{
-		ft_putnbr_fd(nb / 10, fd);
-		ft_putnbr_fd(-(nb % 10), fd);
+		count += ft_putnbr_fd(nb / 10, fd);
+		count += ft_putnbr_fd(-(nb % 10), fd);
 	}
 	else if (nb < 0)
 	{
-		ft_putchar_fd('-', fd);
-		ft_putnbr_fd(-nb, fd);
+		count += ft_putchar_fd('-', fd);
+		count += ft_putnbr_fd(-nb, fd);
 	}
 	else
-		ft_putchar_fd(nb % 10 + '0', fd);
+		count += ft_putchar_fd(nb % 10 + '0', fd);
+	return (count);
 }
