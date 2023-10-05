@@ -6,7 +6,7 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/28 14:29:52 by tosuman           #+#    #+#              #
-#    Updated: 2023/10/05 21:39:35 by tischmid         ###   ########.fr        #
+#    Updated: 2023/10/05 22:59:58 by tischmid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,9 +37,8 @@ OBJ          = $(addprefix $(OBJDIR)/,$(_OBJ))
 INCLUDE      = $(addprefix $(INCLUDEDIR)/,$(_HEADERS))
 
 CC           = cc
-# TODO: Add -std=c89 -Werror
-CFLAGS       = -O3 -Wall -Wextra \
-		       -pedantic -Wconversion
+CFLAGS       = -O3 -Wall -Wextra -Werror \
+		       -std=c89 -pedantic -Wconversion
 CPPFLAGS     = -I$(LIBFT_DIR) -I$(MINILIBX_DIR) -I$(INCLUDEDIR)
 LDFLAGS      = -L$(LIBFT_DIR) -L$(MINILIBX_DIR) \
 		       -l$(LIBFT_) -l$(MINILIBX_) -lXext -lX11 -lm
