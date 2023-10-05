@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/04 19:29:45 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/04 19:30:20 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/06 00:53:43 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,7 @@ typedef struct s_vars
 	t_fractal	fractal;
 	Bool		render_mutex;
 	Bool		mouse_down;
+	Bool		enable_caching;
 }				t_vars;
 
 typedef struct s_render_state

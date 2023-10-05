@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 09:45:27 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/06 00:09:42 by tischmid         ###   ########.fr       */
+/*   Updated: 2023/10/06 00:41:51 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,18 +53,11 @@ int	zoom_to_mouse(int button, int x, int y, t_vars *vars)
 	double	zoom;
 
 	if (Button4 == button)
-	{
 		zoom = vars->fractal.zoom_factor;
-		vars->fractal.max_iters += ITERS_INC / 5;
-	}
 	else if (Button5 == button)
-	{
 		zoom = 1 / vars->fractal.zoom_factor;
-		vars->fractal.max_iters -= ITERS_INC / 5;
-	}
 	else
 		return (1);
-	ft_dprintf(1, "Iters: %d\n", vars->fractal.max_iters);
 	diff_re = vars->fractal.scale_re.new_max - vars->fractal.scale_re.new_min;
 	diff_im = vars->fractal.scale_im.new_max - vars->fractal.scale_im.new_min;
 	zoom_re = rescale(x, vars->fractal.scale_re);

@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/28 14:17:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 08:41:59 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/06 00:53:50 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ void	init(t_vars *vars)
 	vars->dragging.scale_im = vars->fractal.scale_im;
 	vars->render_mutex = False;
 	vars->mouse_down = False;
+	vars->enable_caching = True;
 }
 
 int	main(int argc, char **argv)

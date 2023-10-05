@@ -6,11 +6,12 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 08:01:23 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 09:38:23 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/06 00:53:01 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <fractol.h>
+#include <X11/X.h>
 #include <mlx.h>
 
 int	close_mlx(t_vars *vars)
@@ -39,7 +40,9 @@ int	keydown_hook(int kc, t_vars *vars)
 			|| XK_Right == kc || XK_Down == kc))
 		ret = translate(kc, -1, -1, vars);
 	else if ('r' == kc)
-		return (render(vars, NO_CACHE), ret);
+		return (render(vars, NO_CACHE), 0);
+	else if ('f' == kc)
+		return (vars->enable_caching = !vars->enable_caching, 0);
 	else if ('1' <= kc && '9' >= kc)
 		return (change_fractal(kc, vars), render(vars, NO_CACHE), 0);
 	else if (',' == kc || '.' == kc)
@@ -55,7 +58,13 @@ int	mouse_down_hook(int button, int x, int y, t_vars *vars)
 
 	ret = 1;
 	if (Button4 == button || Button5 == button)
+	{
 		ret = zoom_to_mouse(button, x, y, vars);
+		if (Button4 == button)
+			change_iterations(']', vars);
+		if (Button5 == button)
+			change_iterations('[', vars);
+	}
 	else if (Button1 == button)
 	{
 		vars->dragging.x = x;

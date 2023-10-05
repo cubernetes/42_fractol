@@ -6,11 +6,12 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 08:00:00 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/03 09:45:10 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/06 00:56:54 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <fractol.h>
+#include <libft.h>
 
 void	apply_viewport(t_complex center, double zoom, t_fractal *fractal)
 {
@@ -41,5 +42,7 @@ int	reset_viewport(int kc, t_vars *vars)
 	vars->fractal.scale_re.new_max = vars->fractal.max_re;
 	vars->fractal.scale_im.new_min = -half_i;
 	vars->fractal.scale_im.new_max = half_i;
+	vars->fractal.max_iters = DEF_MAX_ITERS;
+	ft_dprintf(1, "Max Iterations: %d           \r", DEF_MAX_ITERS);
 	return (0);
 }

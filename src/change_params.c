@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 08:05:50 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/05 21:39:24 by tischmid         ###   ########.fr       */
+/*   Updated: 2023/10/06 00:46:40 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,13 @@ void	change_iterations(int kc, t_vars *vars)
 {
 	if ('-' == kc)
 		vars->fractal.max_iters -= ITERS_INC;
+	else if ('[' == kc)
+		vars->fractal.max_iters -= 2;
 	else if ('=' == kc)
 		vars->fractal.max_iters += ITERS_INC;
+	else if (']' == kc)
+		vars->fractal.max_iters += 2;
 	if (vars->fractal.max_iters < 1)
 		vars->fractal.max_iters = MIN_ITERS;
-	ft_dprintf(1, "Max iterations: %d\n", vars->fractal.max_iters);
+	ft_dprintf(1, "Max iterations: %d       \r", vars->fractal.max_iters);
 }

@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 07:51:23 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/06 00:18:55 by tischmid         ###   ########.fr       */
+/*   Updated: 2023/10/06 00:52:02 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ void	render(t_vars *vars, int use_cache)
 	int						y;
 
 	vars->render_mutex = True;
-	if (!use_cache)
+	if (!use_cache || !vars->enable_caching)
 		render_state.parity = -1;
 	y = -1;
 	while (++y < vars->fractal.img_height)
