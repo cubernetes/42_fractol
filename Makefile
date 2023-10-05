@@ -6,7 +6,7 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/28 14:29:52 by tosuman           #+#    #+#              #
-#    Updated: 2023/10/05 22:59:58 by tischmid         ###   ########.fr        #
+#    Updated: 2023/10/06 00:40:07 by tischmid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -47,13 +47,13 @@ all: $(NAME)
 
 $(NAME): $(MINILIBX_DIR)/$(MINILIBX) $(LIBFT_DIR)/$(LIBFT) $(OBJ)
 	$(CC) -o $@ $(OBJ) $(LDFLAGS)
-	make
+	$(MAKE)
 
 $(LIBFT_DIR)/$(LIBFT):
-	make -C $(LIBFT_DIR)
+	$(MAKE) -C $(LIBFT_DIR)
 
-$(MINILIBX_DIR)/$(MINILIBX):
-	make -C $(MINILIBX_DIR)
+$(MINILIBX_DIR)/$(MINILIBX): $(MINILIBX_DIR)
+	$(MAKE) -C $(MINILIBX_DIR)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
@@ -63,14 +63,21 @@ $(OBJ): $(INCLUDE) | $(OBJDIR)
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
-clean:
-	make -C $(LIBFT_DIR) $@
-	make -C $(MINILIBX_DIR) $@
+$(MINILIBX_DIR):
+	@printf '\033[31m%s\033[m\n' "Downloading minilibx-linux.tgz"
+	wget -q 'https://cdn.intra.42.fr/document/document/20211/minilibx-linux.tgz'
+	tar xf minilibx-linux.tgz
+	rm -rf minilibx-linux.tgz
+	@printf '\033[31m%s\033[m\n' "Finished downloading"
+
+clean: | $(MINILIBX_DIR)
+	$(MAKE) -C $(LIBFT_DIR) $@
+	if [ -f "$(MINILIBX_DIR)/$(MINILIBX)" ] ; then $(MAKE) -C $(MINILIBX_DIR) $@; fi
 	$(RM) $(OBJ)
 	$(RM) -rf $(OBJDIR)
 
 fclean: clean
-	make -C $(LIBFT_DIR) $@
+	$(MAKE) -C $(LIBFT_DIR) $@
 	$(RM) $(NAME)
 
 re: fclean all
