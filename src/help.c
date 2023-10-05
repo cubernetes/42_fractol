@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/03 07:55:21 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/04 19:20:03 by tosuman          ###   ########.fr       */
+/*   Updated: 2023/10/05 22:57:48 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ void	print_more_help(void)
 		" (default: 80).");
 	print_option("--modulus", "R", "Minimum modulus (argument) of a complex "
 		"number required to rule it out as not part of the set (default: 2).");
-	print_option("--help", NULL, "Show this help.\n");
+	print_option("--help, -h", NULL, "Show this help.\n");
 }
 
 void	print_help(char **argv)
@@ -78,6 +78,8 @@ void	print_help(char **argv)
 		"\033[97mOPTIONS:\033[m\n", argv[0]);
 	print_option("--mandelbrot", NULL,
 		"Render the canonical mandelbrot set (z^2 + c).");
+	print_option("--tricorn", NULL,
+		"Render the canonical tricorn set (conj(z)^2 + c).");
 	print_option("--julia", "RE,IM",
 		"Render the julia set for c = RE+IM*i. RE and IM are decimals"
 		" with a dot for the thousands separator.");
