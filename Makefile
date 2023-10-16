@@ -6,7 +6,7 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/28 14:29:52 by tosuman           #+#    #+#              #
-#    Updated: 2023/10/06 00:40:07 by tischmid         ###   ########.fr        #
+#    Updated: 2023/10/16 12:08:24 by tosuman          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -65,7 +65,8 @@ $(OBJDIR):
 
 $(MINILIBX_DIR):
 	@printf '\033[31m%s\033[m\n' "Downloading minilibx-linux.tgz"
-	wget -q 'https://cdn.intra.42.fr/document/document/20211/minilibx-linux.tgz'
+	# wget -q 'https://cdn.intra.42.fr/document/document/20211/minilibx-linux.tgz'
+	wget -q 'https://cdn.intra.42.fr/document/document/21645/minilibx-linux.tgz'
 	tar xf minilibx-linux.tgz
 	rm -rf minilibx-linux.tgz
 	@printf '\033[31m%s\033[m\n' "Finished downloading"
