@@ -6,7 +6,7 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/28 14:29:52 by tosuman           #+#    #+#              #
-#    Updated: 2023/10/16 12:08:24 by tosuman          ###   ########.fr        #
+#    Updated: 2024/08/23 01:10:33 by tischmid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -47,7 +47,6 @@ all: $(NAME)
 
 $(NAME): $(MINILIBX_DIR)/$(MINILIBX) $(LIBFT_DIR)/$(LIBFT) $(OBJ)
 	$(CC) -o $@ $(OBJ) $(LDFLAGS)
-	$(MAKE)
 
 $(LIBFT_DIR)/$(LIBFT):
 	$(MAKE) -C $(LIBFT_DIR)
@@ -64,12 +63,7 @@ $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
 $(MINILIBX_DIR):
-	@printf '\033[31m%s\033[m\n' "Downloading minilibx-linux.tgz"
-	# wget -q 'https://cdn.intra.42.fr/document/document/20211/minilibx-linux.tgz'
-	wget -q 'https://cdn.intra.42.fr/document/document/21645/minilibx-linux.tgz'
-	tar xf minilibx-linux.tgz
-	rm -rf minilibx-linux.tgz
-	@printf '\033[31m%s\033[m\n' "Finished downloading"
+	mkdir -p $(MINILIBX_DIR)
 
 clean: | $(MINILIBX_DIR)
 	$(MAKE) -C $(LIBFT_DIR) $@
@@ -81,6 +75,7 @@ fclean: clean
 	$(MAKE) -C $(LIBFT_DIR) $@
 	$(RM) $(NAME)
 
-re: fclean all
+re: fclean
+	@$(MAKE) all
 
 .PHONY: re fclean clean all

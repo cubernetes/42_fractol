@@ -6,7 +6,7 @@
 #    By: tosuman <timo42@proton.me>                 +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/09/12 10:04:04 by tosuman           #+#    #+#              #
-#    Updated: 2023/10/05 23:40:12 by tischmid         ###   ########.fr        #
+#    Updated: 2024/08/23 01:10:25 by tischmid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -114,7 +114,8 @@ clean:
 fclean: clean
 	$(RM) $(NAME)
 
-re: fclean all
+re: fclean
+	@$(MAKE) all
 
 bonus: $(OBJ) $(OBJ_BONUS)
 	$(AR) $(NAME) $^

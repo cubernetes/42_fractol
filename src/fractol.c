@@ -6,7 +6,7 @@
 /*   By: tosuman <timo42@proton.me>                 +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/28 14:17:25 by tosuman           #+#    #+#             */
-/*   Updated: 2023/10/06 00:53:50 by tischmid         ###   ########.fr       */
+/*   Updated: 2024/08/23 01:09:31 by tischmid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,12 @@
 
 void	setup_hooks(t_vars *vars)
 {
-	mlx_hook(vars->win, KeyPress, KeyPressMask, keydown_hook, vars);
-	mlx_hook(vars->win, ButtonPress, ButtonPressMask, mouse_down_hook, vars);
-	mlx_hook(vars->win, ButtonRelease, ButtonReleaseMask, mouse_up_hook, vars);
-	mlx_hook(vars->win, MotionNotify, PointerMotionMask, mouse_move_hook, vars);
-	mlx_hook(vars->win, DestroyNotify, NoEventMask, close_mlx, vars);
-	mlx_hook(vars->win, ConfigureNotify, StructureNotifyMask, resize_img, vars);
+	mlx_hook(vars->win, KeyPress, KeyPressMask, (int (*)(void*))keydown_hook, vars);
+	mlx_hook(vars->win, ButtonPress, ButtonPressMask, (int (*)(void*))mouse_down_hook, vars);
+	mlx_hook(vars->win, ButtonRelease, ButtonReleaseMask, (int (*)(void*))mouse_up_hook, vars);
+	mlx_hook(vars->win, MotionNotify, PointerMotionMask, (int (*)(void*))mouse_move_hook, vars);
+	mlx_hook(vars->win, DestroyNotify, NoEventMask, (int (*)(void*))close_mlx, vars);
+	mlx_hook(vars->win, ConfigureNotify, StructureNotifyMask, (int (*)(void*))resize_img, vars);
 }
 
 void	init(t_vars *vars)
